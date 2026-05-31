@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# PokéTrack runtime data
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Local user config — may contain a private webhook URL.
+# Ship config.example.json instead; the app auto-creates config.json on first run.
+config.json
+
+# IDE
+.vscode/
+.idea/

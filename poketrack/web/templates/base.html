@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ t('app.title') }} — {{ t('app.subtitle') }}</title>
+
+  <!--
+    Tailwind via the Play CDN — no Node build step required. The "midnight"
+    colour scale below is injected straight from poketrack/gui/theme.py, so the
+    web UI shares the exact same Midnight Blue palette as the desktop UI.
+  -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            midnight: {
+              bg:           '{{ palette.bg }}',
+              bgAlt:        '{{ palette.bg_alt }}',
+              surface:      '{{ palette.surface }}',
+              surfaceAlt:   '{{ palette.surface_alt }}',
+              border:       '{{ palette.border }}',
+              primary:      '{{ palette.primary }}',
+              primaryHover: '{{ palette.primary_hover }}',
+              accent:       '{{ palette.accent }}',
+              text:         '{{ palette.text }}',
+              muted:        '{{ palette.text_muted }}',
+              faint:        '{{ palette.text_faint }}',
+              success:      '{{ palette.success }}',
+              warning:      '{{ palette.warning }}',
+              danger:       '{{ palette.danger }}'
+            }
+          },
+          fontFamily: {
+            sans: ['Segoe UI', 'system-ui', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Same hex values exposed as CSS variables for custom styles. -->
+  <style>
+    :root {
+      {% for key, value in palette.items() %}--mn-{{ key | replace('_', '-') }}: {{ value }};
+      {% endfor %}
+    }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-midnight-bg text-midnight-text font-sans min-h-screen antialiased">
+  {% block content %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

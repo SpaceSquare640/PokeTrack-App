@@ -1,0 +1,15 @@
+{
+  "language": "en",
+  "regions": ["Global"],
+  "source": "leekduck",
+  "refresh_interval_minutes": 60,
+  "notifications": true,
+  "webhook_url": "",
+  "prune_after_days": 45,
+  "database_path": "data/poketrack.db",
+  "web": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "debug": false
+  }
+}

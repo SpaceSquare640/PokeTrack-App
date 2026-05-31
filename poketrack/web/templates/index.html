@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- ───────────────────────── Top bar ───────────────────────── -->
+<header class="sticky top-0 z-20 bg-midnight-bgAlt/95 backdrop-blur border-b border-midnight-border">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
+    <div class="flex-1 min-w-0">
+      <h1 class="text-xl font-bold text-midnight-accent leading-tight">{{ t('app.title') }}</h1>
+      <p class="text-xs text-midnight-muted truncate">{{ t('app.subtitle') }}</p>
+    </div>
+
+    <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
+      <select name="language" onchange="this.form.submit()"
+              class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                     px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+        {% for code in languages %}
+          <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <button id="refresh-btn"
+            class="shrink-0 bg-midnight-primary hover:bg-midnight-primaryHover text-white text-sm font-medium
+                   rounded-lg px-4 py-2 transition-colors">
+      {{ t('nav.refresh') }}
+    </button>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-6">
+
+  <!-- ──────────────── Heading + stats + last updated ──────────────── -->
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+    <div>
+      <h2 class="text-2xl font-bold text-midnight-text">{{ t('events.section_all') }}</h2>
+      <div class="flex items-center gap-3 mt-1 text-sm">
+        <span class="text-midnight-success">● {{ t('events.stat_live', n=stats.live) }}</span>
+        <span class="text-midnight-warning">● {{ t('events.stat_upcoming', n=stats.upcoming) }}</span>
+        <span class="text-midnight-faint">{{ t('events.stat_total', n=stats.total) }}</span>
+      </div>
+    </div>
+    <p id="last-updated" class="text-xs text-midnight-faint">
+      {{ t('events.last_updated', time=last_updated) }}
+    </p>
+  </div>
+
+  <!-- ──────────────── Search + type filter (GET) ──────────────── -->
+  <form action="{{ url_for('index') }}" method="get"
+        class="flex flex-wrap items-center gap-3 mb-3">
+    <input type="text" name="q" value="{{ query }}" placeholder="{{ t('events.search_placeholder') }}"
+           class="flex-1 min-w-[200px] bg-midnight-surface text-midnight-text text-sm rounded-lg
+                  border border-midnight-border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+    <select name="type" onchange="this.form.submit()"
+            class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
+                   px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+      <option value="">{{ t('events.all_types') }}</option>
+      {% for raw, label in types %}
+        <option value="{{ raw }}" {% if raw == current_type %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit"
+            class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                   rounded-lg px-4 py-2.5 border border-midnight-border transition-colors">
+      {{ t('filters.apply') }}
+    </button>
+  </form>
+
+  <!-- ──────────────── Region filter (POST) ──────────────── -->
+  <form action="{{ url_for('set_regions') }}" method="post"
+        class="bg-midnight-surface border border-midnight-border rounded-xl p-4 mb-6">
+    <p class="text-sm font-semibold text-midnight-muted mb-3">{{ t('filters.title') }}</p>
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      {% for region in regions_all %}
+        <label class="inline-flex items-center gap-2 text-sm text-midnight-text cursor-pointer select-none">
+          <input type="checkbox" name="regions" value="{{ region }}"
+                 {% if region in selected_regions %}checked{% endif %}
+                 class="accent-midnight-primary w-4 h-4 rounded">
+          {{ t('regions.' + region) }}
+        </label>
+      {% endfor %}
+      <button type="submit"
+              class="ml-auto bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                     rounded-lg px-4 py-1.5 border border-midnight-border transition-colors">
+        {{ t('filters.apply') }}
+      </button>
+    </div>
+  </form>
+
+  <!-- ──────────────── Event grid ──────────────── -->
+  {% if events %}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% for event in events %}
+        <a href="{{ event.link or '#' }}" {% if event.link %}target="_blank" rel="noopener"{% endif %}
+           class="group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
+                  flex flex-col hover:border-midnight-primary hover:-translate-y-0.5 transition-all">
+          {% if event.image %}
+            <div class="h-32 bg-midnight-surfaceAlt overflow-hidden">
+              <img src="{{ event.image }}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"
+                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            </div>
+          {% endif %}
+
+          <div class="p-5 flex flex-col flex-1">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              {% if event.badge %}
+                <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
+                      style="color: {{ event.status_color }};">{{ event.badge }}</span>
+              {% endif %}
+              {% if event.countdown %}
+                <span class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
+              {% endif %}
+              {% if event.type_label %}
+                <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
+              {% endif %}
+            </div>
+
+            <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
+
+            {% if event.description %}
+              <p class="text-xs text-midnight-muted mb-3 line-clamp-2">{{ event.description }}</p>
+            {% endif %}
+
+            <dl class="text-xs text-midnight-muted space-y-1 mb-4">
+              <div class="flex gap-2">
+                <dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd>
+              </div>
+            </dl>
+
+            {% if event.link %}
+              <span class="mt-auto inline-flex items-center gap-1 text-sm text-midnight-accent">
+                {{ t('events.view_details') }} →
+              </span>
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-xl">
+      {{ t('events.empty') }}
+    </div>
+  {% endif %}
+</main>
+
+<!-- Toast for refresh / auto-update feedback -->
+<div id="toast"
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none
+            bg-midnight-surfaceAlt border border-midnight-border text-midnight-text text-sm
+            rounded-lg px-4 py-2 shadow-lg transition-all duration-300"></div>
+
+<script>
+  // State the auto-refresh poller uses to detect newly-added events.
+  window.POKETRACK = { count: {{ events|length }}, q: {{ query|tojson }}, type: {{ current_type|tojson }} };
+</script>
+{% endblock %}

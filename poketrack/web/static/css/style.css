@@ -1,0 +1,49 @@
+/*
+ * PokéTrack — custom touches on top of Tailwind.
+ * Colours reference the CSS variables injected from poketrack/gui/theme.py
+ * (see base.html), so this file never hard-codes a hex value.
+ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--mn-bg);
+  color: var(--mn-text);
+}
+
+/* Slim, themed scrollbar to match the dark aesthetic. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--mn-bg-alt);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--mn-surface-alt);
+  border-radius: 6px;
+  border: 2px solid var(--mn-bg-alt);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mn-border);
+}
+
+/* Firefox */
+* {
+  scrollbar-color: var(--mn-surface-alt) var(--mn-bg-alt);
+  scrollbar-width: thin;
+}
+
+/* Toast visible state (toggled from app.js). */
+#toast.toast-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+/* Subtle lift on event cards. */
+article.group:hover {
+  box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.6);
+}
