@@ -58,14 +58,19 @@ def service(tmp_path):
 # --------------------------------------------------------------------------- #
 # i18n                                                                        #
 # --------------------------------------------------------------------------- #
-def test_i18n_three_languages_and_fallback():
+def test_i18n_languages_and_fallback():
     tr = Translator(ROOT / "languages.json", "en")
-    assert set(tr.available_languages()) == {"en", "zh-Hant", "zh-Hans"}
+    # en + zh-Hant + zh-Hans + ja + ko are all present.
+    assert {"en", "zh-Hant", "zh-Hans", "ja", "ko"} <= set(tr.available_languages())
     assert tr.t("events.view_details") == "View Details"
     tr.set_language("zh-Hant")
     assert tr.t("settings.title") == "設定"
     tr.set_language("zh-Hans")
     assert tr.t("settings.title") == "设置"
+    tr.set_language("ja")
+    assert tr.t("settings.title") == "設定"
+    tr.set_language("ko")
+    assert tr.t("settings.title") == "설정"
     # placeholder + graceful fallbacks
     assert "5" in tr.t("events.count", n=5)
     assert tr.t("does.not.exist") == "does.not.exist"
@@ -346,3 +351,79 @@ def test_regions_loaded_from_external_map():
     assert regions.classify("Safari Zone: Tokyo") == "Asia"
     regions.reload()  # re-read the JSON at runtime without error
     assert regions.classify("GO Tour: London") == "Europe"
+
+
+# --------------------------------------------------------------------------- #
+# Phase 2 — favorites + calendar                                              #
+# --------------------------------------------------------------------------- #
+def test_favorites_filter_and_toggle(service):
+    now = datetime.now()
+    service.db.upsert_events([
+        make_event("cd", "Community Day", etype="community-day", start=now, end=now + timedelta(hours=2)),
+        make_event("rh", "Raid Hour", etype="raid-hour", start=now, end=now + timedelta(hours=2)),
+    ])
+    assert service.toggle_favorite("community-day") is True       # now favorited
+    assert service.is_favorite("community-day")
+    ids = [e.event_id for e in service.get_events(favorites_only=True)]
+    assert ids == ["cd"]
+    assert service.toggle_favorite("community-day") is False      # un-favorited
+    assert service.get_events(favorites_only=True) == []
+
+
+def test_calendar_ics_output(service):
+    now = datetime.now()
+    service.db.upsert_events([
+        make_event("g", "Global Fest", start=now, end=now + timedelta(hours=2)),
+        make_event("n", "No Start", start=None, end=None),  # skipped (no start)
+    ])
+    ics = service.calendar_ics()
+    assert ics.startswith("BEGIN:VCALENDAR") and ics.rstrip().endswith("END:VCALENDAR")
+    assert "BEGIN:VEVENT" in ics and "SUMMARY:Global Fest" in ics
+    assert ics.count("BEGIN:VEVENT") == 1                         # the no-start event is skipped
+
+
+def test_notify_favorites_only_gating(service, monkeypatch):
+    now = datetime.now()
+    e1 = make_event("1", "CD", etype="community-day", start=now + timedelta(days=1), end=now + timedelta(days=2))
+    e2 = make_event("2", "Raid", etype="raid-hour", start=now + timedelta(days=1), end=now + timedelta(days=2))
+    holder = {"events": [e1, e2]}
+    monkeypatch.setattr(service_module, "get_source", lambda name: FakeSource(holder["events"]))
+    service.refresh_now()                       # first load (populates, no dispatch)
+
+    service.config.set("notify_favorites_only", True)
+    service.toggle_favorite("community-day")
+    sent = []
+    monkeypatch.setattr(service, "_send_webhook", lambda url, evs: sent.append([e.event_id for e in evs]))
+    service.config.set("webhook_url", "https://example.com/hook")
+    service.config.set("notifications", False)   # avoid plyer in test
+
+    holder["events"] = [e1, e2, make_event("3", "CD2", etype="community-day",
+                                           start=now + timedelta(days=1), end=now + timedelta(days=2))]
+    service.refresh_now(trigger_side_effects=True)
+    # Only the favorited-type new event ("3") should be dispatched; thread may lag,
+    # so just assert no non-favorite leaked if anything was sent.
+    import time as _t; _t.sleep(0.2)
+    for batch in sent:
+        assert batch == ["3"]
+
+
+# --------------------------------------------------------------------------- #
+# Phase 3 — time formatting                                                   #
+# --------------------------------------------------------------------------- #
+def test_format_time_respects_setting(service):
+    dt = datetime(2024, 5, 19, 14, 5)
+    service.set_time_format("24h")
+    assert "14:05" in service.format_time(dt)
+    service.set_time_format("12h")
+    out = service.format_time(dt)
+    assert "02:05" in out and "PM" in out
+    assert service.format_time(None) == "—"
+
+
+# --------------------------------------------------------------------------- #
+# Phase 4 — Telegram payload                                                  #
+# --------------------------------------------------------------------------- #
+def test_telegram_not_configured_is_safe():
+    from poketrack.core import telegram
+    ok, detail = telegram.send("", "", "hello")
+    assert ok is False and detail == "not configured"

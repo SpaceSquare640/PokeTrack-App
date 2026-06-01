@@ -24,7 +24,8 @@ from typing import Callable, Optional
 
 from ..config import Config
 from ..i18n import Translator
-from . import webhook
+from . import calendar as ical
+from . import telegram, webhook
 from .database import Database
 from .models import Event
 from .notify import notify
@@ -156,11 +157,14 @@ class PokeTrackService:
                 logger.exception("on_update callback failed")
 
     def _dispatch_new_events(self, new_events: list[Event]) -> None:
-        """Fire notifications + webhook for new events relevant to the user."""
+        """Fire notifications + webhook + Telegram for relevant new events."""
         relevant = [
             e for e in new_events
             if self._region_match(e) and e.status() in ("upcoming", "active")
         ]
+        if self.config.get("notify_favorites_only", False):
+            favs = set(self.favorite_types())
+            relevant = [e for e in relevant if e.event_type in favs]
         if not relevant:
             return
         if self.config.get("notifications", True):
@@ -169,6 +173,22 @@ class PokeTrackService:
         if url:
             # Off-thread so a slow webhook never blocks the refresh.
             threading.Thread(target=self._send_webhook, args=(url, relevant), daemon=True).start()
+        if (self.config.get("telegram_bot_token", "") or "").strip() and \
+                (self.config.get("telegram_chat_id", "") or "").strip():
+            threading.Thread(target=self._send_telegram, args=(relevant,), daemon=True).start()
+
+    def _send_telegram(self, events: list[Event]) -> tuple[bool, str]:
+        lines = [self.t("notify.new_body", n=len(events))]
+        for e in events[:10]:
+            line = f"• {e.name}"
+            if e.link:
+                line += f"\n{e.link}"
+            lines.append(line)
+        return telegram.send(
+            self.config.get("telegram_bot_token", ""),
+            self.config.get("telegram_chat_id", ""),
+            "\n".join(lines),
+        )
 
     def _send_webhook(self, url: str, events: list[Event]) -> tuple[bool, str]:
         payload = [self._webhook_event(e) for e in events]
@@ -187,8 +207,8 @@ class PokeTrackService:
             "region": self.t(f"regions.{event.region}"),
             "type": event.type_label,
             "description": self.description(event),
-            "start": event.format_time(event.start),
-            "end": event.format_time(event.end),
+            "start": self.format_time(event.start),
+            "end": self.format_time(event.end),
         }
 
     def send_test_webhook(self, url: str) -> tuple[bool, str]:
@@ -217,19 +237,25 @@ class PokeTrackService:
         event_types: Optional[list[str]] = None,
         limit: Optional[int] = None,
         use_filter: bool = True,
+        favorites_only: bool = False,
     ) -> list[Event]:
         """Return events, applying the user's region filter by default.
 
         Semantics: an event is shown when it is Global *or* its region is one the
-        user selected.  Optional ``search`` and ``event_types`` narrow further.
+        user selected.  Optional ``search`` and ``event_types`` narrow further;
+        ``favorites_only`` keeps only events whose type is favorited.
         """
         regions = self.config.get("regions", [GLOBAL]) if use_filter else None
         if regions == []:  # empty selection => no region filter (show everything)
             regions = None
-        return self.db.get_events(
+        events = self.db.get_events(
             regions=regions, statuses=statuses, event_types=event_types,
             search=search, limit=limit,
         )
+        if favorites_only:
+            favs = set(self.favorite_types())
+            events = [e for e in events if e.event_type in favs]
+        return events
 
     def available_types(self) -> list[str]:
         """Raw event types present in the store (for the type filter dropdown)."""
@@ -306,6 +332,56 @@ class PokeTrackService:
     def _is_cjk(self) -> bool:
         return self.translator.language.startswith("zh")
 
+    def format_time(self, dt) -> str:
+        """Format an event time honouring the time_format + display_timezone settings.
+
+        Source times are naive local; if a display timezone is set we interpret
+        them as system-local and convert. Falls back gracefully on any error.
+        """
+        if not dt:
+            return "—"
+        tz_name = (self.config.get("display_timezone", "") or "").strip()
+        if tz_name:
+            try:
+                from zoneinfo import ZoneInfo
+                dt = dt.astimezone().astimezone(ZoneInfo(tz_name)).replace(tzinfo=None)
+            except Exception:  # noqa: BLE001 - bad tz name => show local time
+                pass
+        fmt = "%b %d, %Y · %I:%M %p" if self.config.get("time_format") == "12h" else "%b %d, %Y · %H:%M"
+        return dt.strftime(fmt)
+
+    # ------------------------------------------------------------------ #
+    # Favorites (favorited event types)                                  #
+    # ------------------------------------------------------------------ #
+    def favorite_types(self) -> list[str]:
+        return list(self.config.get("favorite_types", []) or [])
+
+    def is_favorite(self, event_type: str) -> bool:
+        return event_type in self.favorite_types()
+
+    def toggle_favorite(self, event_type: str) -> bool:
+        """Star/unstar an event type. Returns the new favorited state."""
+        favs = self.favorite_types()
+        if event_type in favs:
+            favs.remove(event_type)
+        elif event_type:
+            favs.append(event_type)
+        self.config.set("favorite_types", favs)
+        return event_type in favs
+
+    # ------------------------------------------------------------------ #
+    # Calendar export                                                    #
+    # ------------------------------------------------------------------ #
+    def calendar_ics(self, events: Optional[list[Event]] = None) -> str:
+        """An iCalendar (.ics) document for the given (or current filtered) events."""
+        events = events if events is not None else self.get_events()
+        return ical.build_ics(events, name=self.t("app.title"), describe=self.description)
+
+    def export_calendar(self, path: str | Path, events: Optional[list[Event]] = None) -> str:
+        Path(path).write_text(self.calendar_ics(events), encoding="utf-8")
+        logger.info("Exported calendar to %s", path)
+        return str(path)
+
     # ------------------------------------------------------------------ #
     # Settings                                                           #
     # ------------------------------------------------------------------ #
@@ -329,6 +405,22 @@ class PokeTrackService:
 
     def set_webhook_secret(self, secret: str) -> None:
         self.config.set("webhook_secret", (secret or "").strip())
+
+    def set_notify_favorites_only(self, enabled: bool) -> None:
+        self.config.set("notify_favorites_only", bool(enabled))
+
+    def set_telegram(self, token: str, chat_id: str) -> None:
+        self.config.set("telegram_bot_token", (token or "").strip(), save=False)
+        self.config.set("telegram_chat_id", (chat_id or "").strip())
+
+    def set_time_format(self, fmt: str) -> None:
+        self.config.set("time_format", "12h" if fmt == "12h" else "24h")
+
+    def set_display_timezone(self, tz_name: str) -> None:
+        self.config.set("display_timezone", (tz_name or "").strip())
+
+    def set_close_to_tray(self, enabled: bool) -> None:
+        self.config.set("close_to_tray", bool(enabled))
 
     # ------------------------------------------------------------------ #
     # Config import / export                                             #

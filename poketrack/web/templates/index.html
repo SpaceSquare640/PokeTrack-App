@@ -69,6 +69,19 @@
     </button>
   </form>
 
+  <!-- ──────────────── Favorites + calendar ──────────────── -->
+  <div class="flex flex-wrap items-center gap-3 mb-3">
+    {% if favorites_only %}
+      <a href="{{ url_for('index', q=query or none, type=current_type or none) }}"
+         class="text-sm rounded-lg px-4 py-2 border border-midnight-primary text-midnight-accent bg-midnight-surfaceAlt">★ {{ t('events.favorites') }}</a>
+    {% else %}
+      <a href="{{ url_for('index', q=query or none, type=current_type or none, fav=1) }}"
+         class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">☆ {{ t('events.favorites') }}</a>
+    {% endif %}
+    <a href="{{ url_for('calendar_ics', q=query or none, type=current_type or none, fav=(1 if favorites_only else none)) }}"
+       class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">📅 {{ t('events.export_calendar') }}</a>
+  </div>
+
   <!-- ──────────────── Region filter (POST) ──────────────── -->
   <form action="{{ url_for('set_regions') }}" method="post"
         class="bg-midnight-surface border border-midnight-border rounded-xl p-4 mb-6">
@@ -94,55 +107,51 @@
   {% if events %}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {% for event in events %}
-        <a href="{{ event.link or '#' }}" {% if event.link %}target="_blank" rel="noopener"{% endif %}
-           class="group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
-                  flex flex-col hover:border-midnight-primary hover:-translate-y-0.5 transition-all">
-          {% if event.image %}
-            <div class="h-32 bg-midnight-surfaceAlt overflow-hidden">
-              <img src="{{ event.image }}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"
-                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-            </div>
-          {% endif %}
+        <div class="relative group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
+                    flex flex-col hover:border-midnight-primary hover:-translate-y-0.5 transition-all">
+          <!-- Favorite toggle (kept outside the card link) -->
+          <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10">
+            <input type="hidden" name="type" value="{{ event.event_type }}">
+            <button type="submit" title="{{ t('events.favorite') }}"
+                    class="w-8 h-8 rounded-full bg-midnight-bg/70 backdrop-blur flex items-center justify-center
+                           {% if event.favorite %}text-midnight-warning{% else %}text-midnight-faint hover:text-midnight-text{% endif %}">
+              {% if event.favorite %}★{% else %}☆{% endif %}
+            </button>
+          </form>
 
-          <div class="p-5 flex flex-col flex-1">
-            <div class="flex items-center gap-2 mb-2 flex-wrap">
-              {% if event.badge %}
-                <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
-                      style="color: {{ event.status_color }};">{{ event.badge }}</span>
-              {% endif %}
-              {% if event.countdown %}
-                <span class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
-              {% endif %}
-              {% if event.type_label %}
-                <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
-              {% endif %}
-            </div>
-
-            <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
-
-            {% if event.description %}
-              <p class="text-xs text-midnight-muted mb-3 line-clamp-2">{{ event.description }}</p>
+          <a href="{{ url_for('event_detail', event_id=event.event_id) }}" class="flex flex-col flex-1">
+            {% if event.image %}
+              <div class="h-32 bg-midnight-surfaceAlt overflow-hidden">
+                <img src="{{ event.image }}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+              </div>
             {% endif %}
-
-            <dl class="text-xs text-midnight-muted space-y-1 mb-4">
-              <div class="flex gap-2">
-                <dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd>
+            <div class="p-5 flex flex-col flex-1">
+              <div class="flex items-center gap-2 mb-2 flex-wrap pr-8">
+                {% if event.badge %}
+                  <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
+                        style="color: {{ event.status_color }};">{{ event.badge }}</span>
+                {% endif %}
+                {% if event.countdown %}
+                  <span class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
+                {% endif %}
+                {% if event.type_label %}
+                  <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
+                {% endif %}
               </div>
-              <div class="flex gap-2">
-                <dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd>
-              </div>
-              <div class="flex gap-2">
-                <dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd>
-              </div>
-            </dl>
-
-            {% if event.link %}
-              <span class="mt-auto inline-flex items-center gap-1 text-sm text-midnight-accent">
-                {{ t('events.view_details') }} →
-              </span>
-            {% endif %}
-          </div>
-        </a>
+              <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
+              {% if event.description %}
+                <p class="text-xs text-midnight-muted mb-3 line-clamp-2">{{ event.description }}</p>
+              {% endif %}
+              <dl class="text-xs text-midnight-muted space-y-1 mb-4">
+                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd></div>
+                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd></div>
+                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd></div>
+              </dl>
+              <span class="mt-auto inline-flex items-center gap-1 text-sm text-midnight-accent">{{ t('events.view_details') }} →</span>
+            </div>
+          </a>
+        </div>
       {% endfor %}
     </div>
   {% else %}

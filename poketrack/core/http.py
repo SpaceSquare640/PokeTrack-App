@@ -16,7 +16,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-USER_AGENT = "PokeTrack/1.2 (+https://github.com/SpaceSquare640/PokeTrack-App)"
+USER_AGENT = "PokeTrack/1.3 (+https://github.com/SpaceSquare640/PokeTrack-App)"
 DEFAULT_TIMEOUT = 15  # seconds
 
 

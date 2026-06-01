@@ -6,18 +6,19 @@ the page so the two UIs are pixel-identical).
 
 Routes
 ------
-* ``GET  /``              — dashboard (event grid, search/type/region filters)
-* ``POST /set-language``  — change UI language
-* ``POST /set-regions``   — change region filter
-* ``POST /api/refresh``   — trigger a fetch, returns JSON {ok, count, new, message}
-* ``GET  /api/events``    — current (filtered) events as JSON
+* ``GET  /``                 — dashboard (search/type/region/favorites filters)
+* ``GET  /event/<id>``       — event detail page
+* ``GET  /calendar.ics``     — subscribable iCalendar feed (honours filters/?id=)
+* ``POST /favorite``         — toggle a favorited event type
+* ``GET/POST /settings``     — settings page (+ /settings/export, /settings/import)
+* ``POST /api/refresh`` · ``GET /api/events``
 """
 from __future__ import annotations
 
 import logging
 
 from flask import (
-    Flask, Response, jsonify, redirect, render_template, request, url_for,
+    Flask, Response, abort, jsonify, redirect, render_template, request, url_for,
 )
 
 from ..core.regions import REGIONS
@@ -42,17 +43,19 @@ def create_app(service: PokeTrackService) -> Flask:
             "selected_regions": service.config.get("regions", ["Global"]),
         }
 
-    def _filtered_events(q: str, type_filter: str):
+    def _filtered(q: str, type_filter: str, favorites_only: bool):
         return service.get_events(
             search=q or None,
             event_types=[type_filter] if type_filter else None,
+            favorites_only=favorites_only,
         )
 
     @app.route("/")
     def index():
         q = request.args.get("q", "").strip()
         type_filter = request.args.get("type", "").strip()
-        events = _filtered_events(q, type_filter)
+        fav = request.args.get("fav") == "1"
+        events = _filtered(q, type_filter, fav)
         last = service.last_updated()
         return render_template(
             "index.html",
@@ -61,14 +64,45 @@ def create_app(service: PokeTrackService) -> Flask:
             types=[(tp, tp.replace("-", " ").title()) for tp in service.available_types()],
             current_type=type_filter,
             query=q,
-            last_updated=last.strftime("%b %d, %Y · %H:%M") if last else "—",
+            favorites_only=fav,
+            last_updated=service.format_time(last) if last else "—",
             **base_context(),
         )
+
+    @app.get("/event/<path:event_id>")
+    def event_detail(event_id: str):
+        event = service.db.get_event(event_id)
+        if not event:
+            abort(404)
+        return render_template("event.html", event=_view_model(event, service), **base_context())
+
+    @app.get("/calendar.ics")
+    def calendar_ics():
+        event_id = request.args.get("id", "").strip()
+        if event_id:
+            one = service.db.get_event(event_id)
+            events = [one] if one else []
+        else:
+            events = _filtered(
+                request.args.get("q", "").strip(),
+                request.args.get("type", "").strip(),
+                request.args.get("fav") == "1",
+            )
+        return Response(
+            service.calendar_ics(events),
+            mimetype="text/calendar",
+            headers={"Content-Disposition": "attachment; filename=poketrack.ics"},
+        )
+
+    @app.post("/favorite")
+    def favorite():
+        service.toggle_favorite(request.form.get("type", "").strip())
+        return redirect(request.referrer or url_for("index"))
 
     @app.post("/set-language")
     def set_language():
         service.set_language(request.form.get("language", "en"))
-        return redirect(url_for("index"))
+        return redirect(request.referrer or url_for("index"))
 
     @app.post("/set-regions")
     def set_regions():
@@ -81,21 +115,17 @@ def create_app(service: PokeTrackService) -> Flask:
         message = service.t("status.updated") if result.ok else service.t(
             result.error_key or "errors.generic"
         )
-        return jsonify({
-            "ok": result.ok,
-            "count": result.count,
-            "new": result.new_count,
-            "message": message,
-        })
+        return jsonify({"ok": result.ok, "count": result.count, "new": result.new_count, "message": message})
 
     @app.get("/api/events")
     def api_events():
         q = request.args.get("q", "").strip()
         type_filter = request.args.get("type", "").strip()
-        return jsonify([_view_model(e, service) for e in _filtered_events(q, type_filter)])
+        fav = request.args.get("fav") == "1"
+        return jsonify([_view_model(e, service) for e in _filtered(q, type_filter, fav)])
 
     # ------------------------------------------------------------------ #
-    # Settings page (mirrors the desktop Settings tab)                   #
+    # Settings                                                           #
     # ------------------------------------------------------------------ #
     @app.get("/settings")
     def settings():
@@ -107,20 +137,30 @@ def create_app(service: PokeTrackService) -> Flask:
             webhook_secret=cfg.get("webhook_secret", ""),
             interval=cfg.get("refresh_interval_minutes", 60),
             notifications=cfg.get("notifications", True),
+            notify_favorites_only=cfg.get("notify_favorites_only", False),
+            telegram_token=cfg.get("telegram_bot_token", ""),
+            telegram_chat=cfg.get("telegram_chat_id", ""),
+            time_format=cfg.get("time_format", "24h"),
+            timezone=cfg.get("display_timezone", ""),
             source=cfg.get("source", "leekduck"),
+            favorite_types=service.favorite_types(),
             **base_context(),
         )
 
     @app.post("/settings")
     def settings_save():
-        service.set_webhook(request.form.get("webhook_url", ""))
-        service.set_webhook_secret(request.form.get("webhook_secret", ""))
-        service.set_notifications("notifications" in request.form)
-        source = request.form.get("source", "leekduck")
-        if source in ("leekduck", "blog"):
-            service.config.set("source", source)
+        f = request.form
+        service.set_webhook(f.get("webhook_url", ""))
+        service.set_webhook_secret(f.get("webhook_secret", ""))
+        service.set_notifications("notifications" in f)
+        service.set_notify_favorites_only("notify_favorites_only" in f)
+        service.set_telegram(f.get("telegram_token", ""), f.get("telegram_chat", ""))
+        service.set_time_format(f.get("time_format", "24h"))
+        service.set_display_timezone(f.get("timezone", ""))
+        if f.get("source") in ("leekduck", "blog"):
+            service.config.set("source", f.get("source"))
         try:
-            service.set_interval(int(request.form.get("refresh_interval_minutes", 60)))
+            service.set_interval(int(f.get("refresh_interval_minutes", 60)))
         except (TypeError, ValueError):
             pass
         return redirect(url_for("settings", status="saved"))
@@ -161,6 +201,13 @@ def _view_model(event, service: PokeTrackService) -> dict:
     data["region_label"] = service.t(f"regions.{event.region}")
     data["countdown"] = service.countdown(event)
     data["description"] = service.description(event)
+    data["start_display"] = service.format_time(event.start)
+    data["end_display"] = service.format_time(event.end)
+    data["favorite"] = service.is_favorite(event.event_type)
+    data["bosses"] = event.bosses
+    data["promocodes"] = event.promocodes
+    data["has_spawns"] = event.has_spawns
+    data["has_research"] = event.has_research
     badge_keys = {
         "active": "events.active_badge",
         "upcoming": "events.upcoming_badge",

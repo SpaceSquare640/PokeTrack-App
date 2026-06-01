@@ -1,344 +1,182 @@
 {
   "en": {
-    "app": {
-      "title": "PokéTrack",
-      "subtitle": "Pokémon GO Community Activity Monitor",
-      "tagline": "Track events across regions"
-    },
-    "nav": {
-      "events": "Events",
-      "settings": "Settings",
-      "refresh": "Refresh",
-      "open_web": "Open Web View",
-      "language": "Language",
-      "regions": "Regions"
-    },
+    "app": { "title": "PokéTrack", "subtitle": "Pokémon GO Community Activity Monitor", "tagline": "Track events across regions" },
+    "nav": { "events": "Events", "settings": "Settings", "refresh": "Refresh", "open_web": "Open Web View", "language": "Language", "regions": "Regions" },
     "events": {
-      "section_active": "Active Now",
-      "section_upcoming": "Upcoming",
-      "section_other": "Other Events",
-      "section_all": "All Events",
-      "empty": "No events found for the selected filters.",
-      "starts": "Starts",
-      "ends": "Ends",
-      "type": "Type",
-      "region": "Region",
-      "view_details": "View Details",
-      "last_updated": "Last updated: {time}",
-      "active_badge": "LIVE",
-      "upcoming_badge": "SOON",
-      "ended_badge": "ENDED",
-      "count": "{n} events",
-      "search_placeholder": "Search events…",
-      "all_types": "All Types",
-      "starts_in": "Starts in {time}",
-      "ends_in": "Ends in {time}",
-      "ended": "Ended",
-      "stat_live": "{n} live",
-      "stat_upcoming": "{n} upcoming",
-      "stat_total": "{n} total",
-      "new_found": "{n} new"
+      "section_active": "Active Now", "section_upcoming": "Upcoming", "section_other": "Other Events", "section_all": "All Events",
+      "empty": "No events found for the selected filters.", "starts": "Starts", "ends": "Ends", "type": "Type", "region": "Region",
+      "view_details": "View Details", "last_updated": "Last updated: {time}", "active_badge": "LIVE", "upcoming_badge": "SOON",
+      "ended_badge": "ENDED", "count": "{n} events", "search_placeholder": "Search events…", "all_types": "All Types",
+      "starts_in": "Starts in {time}", "ends_in": "Ends in {time}", "ended": "Ended", "stat_live": "{n} live",
+      "stat_upcoming": "{n} upcoming", "stat_total": "{n} total", "new_found": "{n} new",
+      "favorites": "Favorites", "favorite": "Favorite", "export_calendar": "Calendar (.ics)", "add_to_calendar": "Add to calendar"
     },
-    "desc": {
-      "featured_raids": "Featured raids: {names}",
-      "promo": "Promo code: {codes}",
-      "spawns": "increased wild spawns",
-      "research": "special Field Research",
-      "includes": "Includes {items}."
-    },
-    "filters": {
-      "all_regions": "All Regions",
-      "apply": "Apply",
-      "title": "Filter by region",
-      "types": "Type"
-    },
+    "desc": { "featured_raids": "Featured raids: {names}", "promo": "Promo code: {codes}", "spawns": "increased wild spawns", "research": "special Field Research", "includes": "Includes {items}." },
+    "filters": { "all_regions": "All Regions", "apply": "Apply", "title": "Filter by region", "types": "Type" },
     "settings": {
-      "title": "Settings",
-      "language": "Language",
-      "regions": "Filter Regions",
-      "refresh_interval": "Refresh interval (minutes)",
-      "source": "Data Source",
-      "notifications": "Desktop notifications",
-      "notifications_hint": "Notify me about new events in my regions",
-      "webhook": "Webhook URL",
-      "webhook_hint": "POST new-event alerts to this URL (Discord, Slack, or any endpoint)",
-      "webhook_placeholder": "https://…",
-      "webhook_test": "Send test",
-      "webhook_ok": "Webhook test sent ✓",
-      "webhook_fail": "Webhook test failed ✗",
-      "webhook_secret": "Webhook secret (HMAC)",
-      "webhook_secret_hint": "Optional. Signs each POST with X-PokeTrack-Signature so the receiver can verify it.",
-      "config": "Configuration",
-      "export_config": "Export config",
-      "import_config": "Import config",
-      "config_exported": "Config exported ✓",
-      "config_imported": "Config imported ✓",
-      "config_import_failed": "Import failed ✗",
-      "save": "Save",
-      "saved": "Settings saved."
+      "title": "Settings", "language": "Language", "regions": "Filter Regions", "refresh_interval": "Refresh interval (minutes)", "source": "Data Source",
+      "notifications": "Desktop notifications", "notifications_hint": "Notify me about new events in my regions",
+      "webhook": "Webhook URL", "webhook_hint": "POST new-event alerts to this URL (Discord, Slack, or any endpoint)", "webhook_placeholder": "https://…",
+      "webhook_test": "Send test", "webhook_ok": "Webhook test sent ✓", "webhook_fail": "Webhook test failed ✗",
+      "webhook_secret": "Webhook secret (HMAC)", "webhook_secret_hint": "Optional. Signs each POST with X-PokeTrack-Signature so the receiver can verify it.",
+      "config": "Configuration", "export_config": "Export config", "import_config": "Import config",
+      "config_exported": "Config exported ✓", "config_imported": "Config imported ✓", "config_import_failed": "Import failed ✗",
+      "notify_favorites": "Notify only for favorite event types",
+      "telegram": "Telegram alerts", "telegram_token": "Bot token", "telegram_chat": "Chat ID",
+      "time_format": "Time format", "time_24h": "24-hour", "time_12h": "12-hour",
+      "timezone": "Display timezone", "timezone_hint": "Blank = local. IANA name (e.g. Asia/Taipei). Only meaningful for region-specific events.",
+      "tray": "Minimize to system tray on close",
+      "save": "Save", "saved": "Settings saved."
     },
-    "status": {
-      "ready": "Ready",
-      "fetching": "Fetching latest events…",
-      "updated": "Events updated.",
-      "offline": "Offline — showing cached events."
-    },
-    "errors": {
-      "network": "Network error: could not reach the event source. Showing cached data.",
-      "parse": "Could not read event data (the source format may have changed).",
-      "generic": "Something went wrong. Please try again."
-    },
-    "time": {
-      "day": "{n}d",
-      "hour": "{n}h",
-      "minute": "{n}m",
-      "now": "moments"
-    },
-    "notify": {
-      "new_title": "PokéTrack — New Events",
-      "new_body": "{n} new event(s) in your selected regions"
-    },
-    "regions": {
-      "Global": "Global",
-      "North America": "North America",
-      "South America": "South America",
-      "Europe": "Europe",
-      "Asia": "Asia",
-      "Oceania": "Oceania",
-      "Africa": "Africa"
-    },
-    "languages": {
-      "en": "English",
-      "zh-Hant": "繁體中文",
-      "zh-Hans": "简体中文"
-    }
+    "status": { "ready": "Ready", "fetching": "Fetching latest events…", "updated": "Events updated.", "offline": "Offline — showing cached events." },
+    "errors": { "network": "Network error: could not reach the event source. Showing cached data.", "parse": "Could not read event data (the source format may have changed).", "generic": "Something went wrong. Please try again." },
+    "time": { "day": "{n}d", "hour": "{n}h", "minute": "{n}m", "now": "moments" },
+    "notify": { "new_title": "PokéTrack — New Events", "new_body": "{n} new event(s) in your selected regions" },
+    "regions": { "Global": "Global", "North America": "North America", "South America": "South America", "Europe": "Europe", "Asia": "Asia", "Oceania": "Oceania", "Africa": "Africa" },
+    "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
   "zh-Hant": {
-    "app": {
-      "title": "PokéTrack",
-      "subtitle": "Pokémon GO 社群活動監測器",
-      "tagline": "追蹤各地區的活動"
-    },
-    "nav": {
-      "events": "活動",
-      "settings": "設定",
-      "refresh": "重新整理",
-      "open_web": "開啟網頁版",
-      "language": "語言",
-      "regions": "地區"
-    },
+    "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 社群活動監測器", "tagline": "追蹤各地區的活動" },
+    "nav": { "events": "活動", "settings": "設定", "refresh": "重新整理", "open_web": "開啟網頁版", "language": "語言", "regions": "地區" },
     "events": {
-      "section_active": "正在進行",
-      "section_upcoming": "即將開始",
-      "section_other": "其他活動",
-      "section_all": "所有活動",
-      "empty": "找不到符合篩選條件的活動。",
-      "starts": "開始",
-      "ends": "結束",
-      "type": "類型",
-      "region": "地區",
-      "view_details": "查看詳情",
-      "last_updated": "最後更新：{time}",
-      "active_badge": "進行中",
-      "upcoming_badge": "即將",
-      "ended_badge": "已結束",
-      "count": "{n} 個活動",
-      "search_placeholder": "搜尋活動…",
-      "all_types": "所有類型",
-      "starts_in": "{time}後開始",
-      "ends_in": "{time}後結束",
-      "ended": "已結束",
-      "stat_live": "{n} 進行中",
-      "stat_upcoming": "{n} 即將",
-      "stat_total": "共 {n}",
-      "new_found": "{n} 個新活動"
+      "section_active": "正在進行", "section_upcoming": "即將開始", "section_other": "其他活動", "section_all": "所有活動",
+      "empty": "找不到符合篩選條件的活動。", "starts": "開始", "ends": "結束", "type": "類型", "region": "地區",
+      "view_details": "查看詳情", "last_updated": "最後更新：{time}", "active_badge": "進行中", "upcoming_badge": "即將",
+      "ended_badge": "已結束", "count": "{n} 個活動", "search_placeholder": "搜尋活動…", "all_types": "所有類型",
+      "starts_in": "{time}後開始", "ends_in": "{time}後結束", "ended": "已結束", "stat_live": "{n} 進行中",
+      "stat_upcoming": "{n} 即將", "stat_total": "共 {n}", "new_found": "{n} 個新活動",
+      "favorites": "最愛", "favorite": "加入最愛", "export_calendar": "行事曆 (.ics)", "add_to_calendar": "加入行事曆"
     },
-    "desc": {
-      "featured_raids": "團體戰精選：{names}",
-      "promo": "優惠代碼：{codes}",
-      "spawns": "野生寶可夢增加",
-      "research": "特殊田野調查",
-      "includes": "包含{items}。"
-    },
-    "filters": {
-      "all_regions": "所有地區",
-      "apply": "套用",
-      "title": "依地區篩選",
-      "types": "類型"
-    },
+    "desc": { "featured_raids": "團體戰精選：{names}", "promo": "優惠代碼：{codes}", "spawns": "野生寶可夢增加", "research": "特殊田野調查", "includes": "包含{items}。" },
+    "filters": { "all_regions": "所有地區", "apply": "套用", "title": "依地區篩選", "types": "類型" },
     "settings": {
-      "title": "設定",
-      "language": "語言",
-      "regions": "篩選地區",
-      "refresh_interval": "更新間隔（分鐘）",
-      "source": "資料來源",
-      "notifications": "桌面通知",
-      "notifications_hint": "當我所在地區有新活動時通知我",
-      "webhook": "Webhook 網址",
-      "webhook_hint": "將新活動通知 POST 到此網址（Discord、Slack 或任何端點）",
-      "webhook_placeholder": "https://…",
-      "webhook_test": "傳送測試",
-      "webhook_ok": "已傳送 Webhook 測試 ✓",
-      "webhook_fail": "Webhook 測試失敗 ✗",
-      "webhook_secret": "Webhook 密鑰（HMAC）",
-      "webhook_secret_hint": "選填。以 X-PokeTrack-Signature 簽署每次 POST，供接收端驗證。",
-      "config": "設定檔",
-      "export_config": "匯出設定",
-      "import_config": "匯入設定",
-      "config_exported": "設定已匯出 ✓",
-      "config_imported": "設定已匯入 ✓",
-      "config_import_failed": "匯入失敗 ✗",
-      "save": "儲存",
-      "saved": "設定已儲存。"
+      "title": "設定", "language": "語言", "regions": "篩選地區", "refresh_interval": "更新間隔（分鐘）", "source": "資料來源",
+      "notifications": "桌面通知", "notifications_hint": "當我所在地區有新活動時通知我",
+      "webhook": "Webhook 網址", "webhook_hint": "將新活動通知 POST 到此網址（Discord、Slack 或任何端點）", "webhook_placeholder": "https://…",
+      "webhook_test": "傳送測試", "webhook_ok": "已傳送 Webhook 測試 ✓", "webhook_fail": "Webhook 測試失敗 ✗",
+      "webhook_secret": "Webhook 密鑰（HMAC）", "webhook_secret_hint": "選填。以 X-PokeTrack-Signature 簽署每次 POST，供接收端驗證。",
+      "config": "設定檔", "export_config": "匯出設定", "import_config": "匯入設定",
+      "config_exported": "設定已匯出 ✓", "config_imported": "設定已匯入 ✓", "config_import_failed": "匯入失敗 ✗",
+      "notify_favorites": "只通知最愛的活動類型",
+      "telegram": "Telegram 通知", "telegram_token": "Bot Token", "telegram_chat": "Chat ID",
+      "time_format": "時間格式", "time_24h": "24 小時制", "time_12h": "12 小時制",
+      "timezone": "顯示時區", "timezone_hint": "留空＝本地。IANA 名稱（如 Asia/Taipei）。僅對特定地區活動有意義。",
+      "tray": "關閉時最小化到系統匣",
+      "save": "儲存", "saved": "設定已儲存。"
     },
-    "status": {
-      "ready": "就緒",
-      "fetching": "正在取得最新活動…",
-      "updated": "活動已更新。",
-      "offline": "離線——顯示快取活動。"
-    },
-    "errors": {
-      "network": "網路錯誤：無法連線到活動來源，改為顯示快取資料。",
-      "parse": "無法解析活動資料（來源格式可能已變更）。",
-      "generic": "發生錯誤，請再試一次。"
-    },
-    "time": {
-      "day": "{n} 天",
-      "hour": "{n} 小時",
-      "minute": "{n} 分鐘",
-      "now": "片刻"
-    },
-    "notify": {
-      "new_title": "PokéTrack — 新活動",
-      "new_body": "你所選地區有 {n} 個新活動"
-    },
-    "regions": {
-      "Global": "全球",
-      "North America": "北美洲",
-      "South America": "南美洲",
-      "Europe": "歐洲",
-      "Asia": "亞洲",
-      "Oceania": "大洋洲",
-      "Africa": "非洲"
-    },
-    "languages": {
-      "en": "English",
-      "zh-Hant": "繁體中文",
-      "zh-Hans": "简体中文"
-    }
+    "status": { "ready": "就緒", "fetching": "正在取得最新活動…", "updated": "活動已更新。", "offline": "離線——顯示快取活動。" },
+    "errors": { "network": "網路錯誤：無法連線到活動來源，改為顯示快取資料。", "parse": "無法解析活動資料（來源格式可能已變更）。", "generic": "發生錯誤，請再試一次。" },
+    "time": { "day": "{n} 天", "hour": "{n} 小時", "minute": "{n} 分鐘", "now": "片刻" },
+    "notify": { "new_title": "PokéTrack — 新活動", "new_body": "你所選地區有 {n} 個新活動" },
+    "regions": { "Global": "全球", "North America": "北美洲", "South America": "南美洲", "Europe": "歐洲", "Asia": "亞洲", "Oceania": "大洋洲", "Africa": "非洲" },
+    "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
   "zh-Hans": {
-    "app": {
-      "title": "PokéTrack",
-      "subtitle": "Pokémon GO 社群活动监测器",
-      "tagline": "追踪各地区的活动"
-    },
-    "nav": {
-      "events": "活动",
-      "settings": "设置",
-      "refresh": "刷新",
-      "open_web": "打开网页版",
-      "language": "语言",
-      "regions": "地区"
-    },
+    "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 社群活动监测器", "tagline": "追踪各地区的活动" },
+    "nav": { "events": "活动", "settings": "设置", "refresh": "刷新", "open_web": "打开网页版", "language": "语言", "regions": "地区" },
     "events": {
-      "section_active": "正在进行",
-      "section_upcoming": "即将开始",
-      "section_other": "其他活动",
-      "section_all": "所有活动",
-      "empty": "找不到符合筛选条件的活动。",
-      "starts": "开始",
-      "ends": "结束",
-      "type": "类型",
-      "region": "地区",
-      "view_details": "查看详情",
-      "last_updated": "最后更新：{time}",
-      "active_badge": "进行中",
-      "upcoming_badge": "即将",
-      "ended_badge": "已结束",
-      "count": "{n} 个活动",
-      "search_placeholder": "搜索活动…",
-      "all_types": "所有类型",
-      "starts_in": "{time}后开始",
-      "ends_in": "{time}后结束",
-      "ended": "已结束",
-      "stat_live": "{n} 进行中",
-      "stat_upcoming": "{n} 即将",
-      "stat_total": "共 {n}",
-      "new_found": "{n} 个新活动"
+      "section_active": "正在进行", "section_upcoming": "即将开始", "section_other": "其他活动", "section_all": "所有活动",
+      "empty": "找不到符合筛选条件的活动。", "starts": "开始", "ends": "结束", "type": "类型", "region": "地区",
+      "view_details": "查看详情", "last_updated": "最后更新：{time}", "active_badge": "进行中", "upcoming_badge": "即将",
+      "ended_badge": "已结束", "count": "{n} 个活动", "search_placeholder": "搜索活动…", "all_types": "所有类型",
+      "starts_in": "{time}后开始", "ends_in": "{time}后结束", "ended": "已结束", "stat_live": "{n} 进行中",
+      "stat_upcoming": "{n} 即将", "stat_total": "共 {n}", "new_found": "{n} 个新活动",
+      "favorites": "收藏", "favorite": "收藏", "export_calendar": "日历 (.ics)", "add_to_calendar": "加入日历"
     },
-    "desc": {
-      "featured_raids": "团体战精选：{names}",
-      "promo": "优惠码：{codes}",
-      "spawns": "野生宝可梦增加",
-      "research": "特殊实地调查",
-      "includes": "包含{items}。"
-    },
-    "filters": {
-      "all_regions": "所有地区",
-      "apply": "应用",
-      "title": "按地区筛选",
-      "types": "类型"
-    },
+    "desc": { "featured_raids": "团体战精选：{names}", "promo": "优惠码：{codes}", "spawns": "野生宝可梦增加", "research": "特殊实地调查", "includes": "包含{items}。" },
+    "filters": { "all_regions": "所有地区", "apply": "应用", "title": "按地区筛选", "types": "类型" },
     "settings": {
-      "title": "设置",
-      "language": "语言",
-      "regions": "筛选地区",
-      "refresh_interval": "更新间隔（分钟）",
-      "source": "数据来源",
-      "notifications": "桌面通知",
-      "notifications_hint": "当我所在地区有新活动时通知我",
-      "webhook": "Webhook 网址",
-      "webhook_hint": "将新活动通知 POST 到此网址（Discord、Slack 或任何端点）",
-      "webhook_placeholder": "https://…",
-      "webhook_test": "发送测试",
-      "webhook_ok": "已发送 Webhook 测试 ✓",
-      "webhook_fail": "Webhook 测试失败 ✗",
-      "webhook_secret": "Webhook 密钥（HMAC）",
-      "webhook_secret_hint": "可选。使用 X-PokeTrack-Signature 签名每次 POST，供接收端验证。",
-      "config": "配置文件",
-      "export_config": "导出设置",
-      "import_config": "导入设置",
-      "config_exported": "设置已导出 ✓",
-      "config_imported": "设置已导入 ✓",
-      "config_import_failed": "导入失败 ✗",
-      "save": "保存",
-      "saved": "设置已保存。"
+      "title": "设置", "language": "语言", "regions": "筛选地区", "refresh_interval": "更新间隔（分钟）", "source": "数据来源",
+      "notifications": "桌面通知", "notifications_hint": "当我所在地区有新活动时通知我",
+      "webhook": "Webhook 网址", "webhook_hint": "将新活动通知 POST 到此网址（Discord、Slack 或任何端点）", "webhook_placeholder": "https://…",
+      "webhook_test": "发送测试", "webhook_ok": "已发送 Webhook 测试 ✓", "webhook_fail": "Webhook 测试失败 ✗",
+      "webhook_secret": "Webhook 密钥（HMAC）", "webhook_secret_hint": "可选。使用 X-PokeTrack-Signature 签名每次 POST，供接收端验证。",
+      "config": "配置文件", "export_config": "导出设置", "import_config": "导入设置",
+      "config_exported": "设置已导出 ✓", "config_imported": "设置已导入 ✓", "config_import_failed": "导入失败 ✗",
+      "notify_favorites": "仅通知收藏的活动类型",
+      "telegram": "Telegram 通知", "telegram_token": "Bot Token", "telegram_chat": "Chat ID",
+      "time_format": "时间格式", "time_24h": "24 小时制", "time_12h": "12 小时制",
+      "timezone": "显示时区", "timezone_hint": "留空＝本地。IANA 名称（如 Asia/Taipei）。仅对特定地区活动有意义。",
+      "tray": "关闭时最小化到系统托盘",
+      "save": "保存", "saved": "设置已保存。"
     },
-    "status": {
-      "ready": "就绪",
-      "fetching": "正在获取最新活动…",
-      "updated": "活动已更新。",
-      "offline": "离线——显示缓存活动。"
+    "status": { "ready": "就绪", "fetching": "正在获取最新活动…", "updated": "活动已更新。", "offline": "离线——显示缓存活动。" },
+    "errors": { "network": "网络错误：无法连接到活动来源，改为显示缓存数据。", "parse": "无法解析活动数据（来源格式可能已更改）。", "generic": "发生错误，请再试一次。" },
+    "time": { "day": "{n} 天", "hour": "{n} 小时", "minute": "{n} 分钟", "now": "片刻" },
+    "notify": { "new_title": "PokéTrack — 新活动", "new_body": "你所选地区有 {n} 个新活动" },
+    "regions": { "Global": "全球", "North America": "北美洲", "South America": "南美洲", "Europe": "欧洲", "Asia": "亚洲", "Oceania": "大洋洲", "Africa": "非洲" },
+    "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
+  },
+  "ja": {
+    "app": { "title": "PokéTrack", "subtitle": "Pokémon GO コミュニティ活動モニター", "tagline": "地域ごとのイベントを追跡" },
+    "nav": { "events": "イベント", "settings": "設定", "refresh": "更新", "open_web": "Web版を開く", "language": "言語", "regions": "地域" },
+    "events": {
+      "section_active": "開催中", "section_upcoming": "開催予定", "section_other": "その他のイベント", "section_all": "すべてのイベント",
+      "empty": "条件に一致するイベントがありません。", "starts": "開始", "ends": "終了", "type": "種類", "region": "地域",
+      "view_details": "詳細を見る", "last_updated": "最終更新：{time}", "active_badge": "開催中", "upcoming_badge": "まもなく",
+      "ended_badge": "終了", "count": "{n} 件のイベント", "search_placeholder": "イベントを検索…", "all_types": "すべての種類",
+      "starts_in": "{time}後に開始", "ends_in": "{time}後に終了", "ended": "終了", "stat_live": "開催中 {n}",
+      "stat_upcoming": "予定 {n}", "stat_total": "合計 {n}", "new_found": "新着 {n} 件",
+      "favorites": "お気に入り", "favorite": "お気に入り", "export_calendar": "カレンダー (.ics)", "add_to_calendar": "カレンダーに追加"
     },
-    "errors": {
-      "network": "网络错误：无法连接到活动来源，改为显示缓存数据。",
-      "parse": "无法解析活动数据（来源格式可能已更改）。",
-      "generic": "发生错误，请再试一次。"
+    "desc": { "featured_raids": "注目レイド：{names}", "promo": "プロモコード：{codes}", "spawns": "野生の出現増加", "research": "特別なフィールドリサーチ", "includes": "{items}を含む。" },
+    "filters": { "all_regions": "すべての地域", "apply": "適用", "title": "地域で絞り込み", "types": "種類" },
+    "settings": {
+      "title": "設定", "language": "言語", "regions": "地域フィルター", "refresh_interval": "更新間隔（分）", "source": "データソース",
+      "notifications": "デスクトップ通知", "notifications_hint": "自分の地域の新着イベントを通知する",
+      "webhook": "Webhook URL", "webhook_hint": "新着イベントをこのURLにPOST（Discord・Slack・任意のエンドポイント）", "webhook_placeholder": "https://…",
+      "webhook_test": "テスト送信", "webhook_ok": "Webhookテストを送信しました ✓", "webhook_fail": "Webhookテストに失敗しました ✗",
+      "webhook_secret": "Webhookシークレット（HMAC）", "webhook_secret_hint": "任意。X-PokeTrack-Signature で各POSTに署名し、受信側が検証できます。",
+      "config": "設定ファイル", "export_config": "設定をエクスポート", "import_config": "設定をインポート",
+      "config_exported": "設定をエクスポートしました ✓", "config_imported": "設定をインポートしました ✓", "config_import_failed": "インポートに失敗しました ✗",
+      "notify_favorites": "お気に入りの種類のみ通知",
+      "telegram": "Telegram 通知", "telegram_token": "ボットトークン", "telegram_chat": "チャットID",
+      "time_format": "時刻表示", "time_24h": "24時間", "time_12h": "12時間",
+      "timezone": "表示タイムゾーン", "timezone_hint": "空欄＝ローカル。IANA名（例：Asia/Tokyo）。地域限定イベントのみ有効。",
+      "tray": "閉じる時にトレイへ最小化",
+      "save": "保存", "saved": "設定を保存しました。"
     },
-    "time": {
-      "day": "{n} 天",
-      "hour": "{n} 小时",
-      "minute": "{n} 分钟",
-      "now": "片刻"
+    "status": { "ready": "準備完了", "fetching": "最新のイベントを取得中…", "updated": "イベントを更新しました。", "offline": "オフライン——キャッシュを表示中。" },
+    "errors": { "network": "ネットワークエラー：ソースに接続できません。キャッシュを表示します。", "parse": "イベントデータを解析できません（形式が変更された可能性）。", "generic": "問題が発生しました。もう一度お試しください。" },
+    "time": { "day": "{n}日", "hour": "{n}時間", "minute": "{n}分", "now": "まもなく" },
+    "notify": { "new_title": "PokéTrack — 新着イベント", "new_body": "選択した地域に新着イベントが {n} 件" },
+    "regions": { "Global": "グローバル", "North America": "北アメリカ", "South America": "南アメリカ", "Europe": "ヨーロッパ", "Asia": "アジア", "Oceania": "オセアニア", "Africa": "アフリカ" },
+    "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
+  },
+  "ko": {
+    "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 커뮤니티 활동 모니터", "tagline": "지역별 이벤트 추적" },
+    "nav": { "events": "이벤트", "settings": "설정", "refresh": "새로고침", "open_web": "웹 보기 열기", "language": "언어", "regions": "지역" },
+    "events": {
+      "section_active": "진행 중", "section_upcoming": "예정", "section_other": "기타 이벤트", "section_all": "모든 이벤트",
+      "empty": "선택한 필터에 맞는 이벤트가 없습니다.", "starts": "시작", "ends": "종료", "type": "유형", "region": "지역",
+      "view_details": "자세히 보기", "last_updated": "마지막 업데이트: {time}", "active_badge": "진행 중", "upcoming_badge": "곧",
+      "ended_badge": "종료", "count": "{n}개 이벤트", "search_placeholder": "이벤트 검색…", "all_types": "모든 유형",
+      "starts_in": "{time} 후 시작", "ends_in": "{time} 후 종료", "ended": "종료됨", "stat_live": "진행 {n}",
+      "stat_upcoming": "예정 {n}", "stat_total": "총 {n}", "new_found": "신규 {n}",
+      "favorites": "즐겨찾기", "favorite": "즐겨찾기", "export_calendar": "캘린더 (.ics)", "add_to_calendar": "캘린더에 추가"
     },
-    "notify": {
-      "new_title": "PokéTrack — 新活动",
-      "new_body": "你所选地区有 {n} 个新活动"
+    "desc": { "featured_raids": "주요 레이드: {names}", "promo": "프로모 코드: {codes}", "spawns": "야생 출현 증가", "research": "특별 필드 리서치", "includes": "{items} 포함." },
+    "filters": { "all_regions": "모든 지역", "apply": "적용", "title": "지역으로 필터", "types": "유형" },
+    "settings": {
+      "title": "설정", "language": "언어", "regions": "지역 필터", "refresh_interval": "새로고침 간격(분)", "source": "데이터 소스",
+      "notifications": "데스크톱 알림", "notifications_hint": "내 지역의 새 이벤트를 알림",
+      "webhook": "Webhook URL", "webhook_hint": "새 이벤트 알림을 이 URL로 POST (Discord, Slack 또는 임의 엔드포인트)", "webhook_placeholder": "https://…",
+      "webhook_test": "테스트 전송", "webhook_ok": "Webhook 테스트 전송됨 ✓", "webhook_fail": "Webhook 테스트 실패 ✗",
+      "webhook_secret": "Webhook 비밀키 (HMAC)", "webhook_secret_hint": "선택. X-PokeTrack-Signature로 각 POST에 서명하여 수신측이 검증할 수 있습니다.",
+      "config": "구성 파일", "export_config": "설정 내보내기", "import_config": "설정 가져오기",
+      "config_exported": "설정을 내보냈습니다 ✓", "config_imported": "설정을 가져왔습니다 ✓", "config_import_failed": "가져오기 실패 ✗",
+      "notify_favorites": "즐겨찾기 유형만 알림",
+      "telegram": "Telegram 알림", "telegram_token": "봇 토큰", "telegram_chat": "채팅 ID",
+      "time_format": "시간 형식", "time_24h": "24시간", "time_12h": "12시간",
+      "timezone": "표시 시간대", "timezone_hint": "비우면 로컬. IANA 이름(예: Asia/Seoul). 지역 한정 이벤트에만 유효.",
+      "tray": "닫을 때 트레이로 최소화",
+      "save": "저장", "saved": "설정이 저장되었습니다."
     },
-    "regions": {
-      "Global": "全球",
-      "North America": "北美洲",
-      "South America": "南美洲",
-      "Europe": "欧洲",
-      "Asia": "亚洲",
-      "Oceania": "大洋洲",
-      "Africa": "非洲"
-    },
-    "languages": {
-      "en": "English",
-      "zh-Hant": "繁體中文",
-      "zh-Hans": "简体中文"
-    }
+    "status": { "ready": "준비됨", "fetching": "최신 이벤트 가져오는 중…", "updated": "이벤트가 업데이트되었습니다.", "offline": "오프라인 — 캐시된 이벤트 표시 중." },
+    "errors": { "network": "네트워크 오류: 소스에 연결할 수 없습니다. 캐시된 데이터를 표시합니다.", "parse": "이벤트 데이터를 읽을 수 없습니다(형식이 변경되었을 수 있음).", "generic": "문제가 발생했습니다. 다시 시도하세요." },
+    "time": { "day": "{n}일", "hour": "{n}시간", "minute": "{n}분", "now": "곧" },
+    "notify": { "new_title": "PokéTrack — 새 이벤트", "new_body": "선택한 지역에 새 이벤트 {n}건" },
+    "regions": { "Global": "글로벌", "North America": "북미", "South America": "남미", "Europe": "유럽", "Asia": "아시아", "Oceania": "오세아니아", "Africa": "아프리카" },
+    "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   }
 }

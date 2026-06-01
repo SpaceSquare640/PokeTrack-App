@@ -8,6 +8,7 @@ root, so the app works regardless of the current working directory.
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 
 from .config import Config
@@ -17,8 +18,15 @@ from .i18n import Translator
 
 logger = logging.getLogger(__name__)
 
-# Project root = the folder that contains this package.
-ROOT = Path(__file__).resolve().parent.parent
+_FROZEN = getattr(sys, "frozen", False)
+
+# RESOURCE_ROOT — read-only bundled assets (languages.json, region map). When
+# frozen by PyInstaller these live in the unpacked temp dir (_MEIPASS).
+RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", "")) if _FROZEN else Path(__file__).resolve().parent.parent
+
+# ROOT — writable location for config.json, the SQLite DB and the image cache.
+# Next to the executable when frozen; the project root otherwise.
+ROOT = Path(sys.executable).parent if _FROZEN else Path(__file__).resolve().parent.parent
 
 
 def configure_logging(level: int = logging.INFO) -> None:
@@ -32,7 +40,8 @@ def configure_logging(level: int = logging.INFO) -> None:
 def build_service() -> PokeTrackService:
     """Construct a fully wired :class:`PokeTrackService`."""
     config = Config(ROOT / "config.json")
-    translator = Translator(ROOT / "languages.json", language=config.get("language", "en"))
+    # languages.json is a bundled asset → RESOURCE_ROOT; the DB is writable → ROOT.
+    translator = Translator(RESOURCE_ROOT / "languages.json", language=config.get("language", "en"))
     db_path = ROOT / config.get("database_path", "data/poketrack.db")
     database = Database(db_path)
     return PokeTrackService(config, translator, database)

@@ -1,5 +1,9 @@
 # PokéTrack
 
+[![CI](https://github.com/SpaceSquare640/PokeTrack-App/actions/workflows/ci.yml/badge.svg)](https://github.com/SpaceSquare640/PokeTrack-App/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/SpaceSquare640/PokeTrack-App)](https://github.com/SpaceSquare640/PokeTrack-App/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A community-activity monitor for **Pokémon GO**. It fetches upcoming and live
 events, stores them locally, and shows them through **two interfaces that share
 one design system** — a CustomTkinter desktop app and a Flask web app, both in a
@@ -22,17 +26,20 @@ consistent *Midnight Blue* dark theme.
 |---|---|
 | **Data source** | Robust parser over the [ScrapedDuck](https://github.com/bigfoott/ScrapedDuck) JSON feed (a structured Leek Duck mirror), plus a best-effort official-blog HTML source behind the same interface. |
 | **Hybrid GUI** | Desktop (**CustomTkinter**) + Web (**Flask + Tailwind**), both *Midnight Blue* dark mode driven by **one shared palette**. |
-| **i18n** | English (default), Traditional Chinese, Simplified Chinese — every string lives in `languages.json`. |
-| **Region filtering** | Pick the regions you care about; Global events always show. |
-| **Search & filters** | Live search + event-type filter in both UIs, on top of the region filter. |
-| **Rich cards** | Event thumbnails, **synthesised descriptions**, live countdowns ("Starts in 3h" / "Ends in 2d"), and a live/upcoming/total stats bar. **Whole card is clickable** → opens the official event page. |
-| **Notifications** | Desktop + in-app alerts when *new* events appear in your selected regions. |
-| **Webhooks** | POST new-event alerts to a **custom URL** — auto-formatted for Discord, Slack, or any generic JSON endpoint. |
-| **Persistence** | **SQLite** stores fetched events for offline/cached viewing; old events are auto-pruned. |
-| **Background updates** | **APScheduler** refreshes on an interval you configure; the web view auto-detects new events. |
-| **Resilient networking** | Shared HTTP session with automatic retries + exponential backoff on transient failures. |
-| **Graceful errors** | Network timeouts / source format changes never crash the UI — cached data stays visible and a localized message is shown. |
-| **Tested** | Deterministic, offline **pytest** suite covering i18n, regions, DB, service, and web rendering. |
+| **i18n** | English (default), Traditional Chinese, Simplified Chinese, **Japanese, Korean** — every string lives in `languages.json`. |
+| **Region filtering** | Pick the regions you care about; Global events always show. Rules live in editable `data/regions_map.json`. |
+| **Search & filters** | Live search + event-type filter + **favorites** in both UIs, on top of the region filter. |
+| **Rich cards & detail view** | Thumbnails, **synthesised descriptions**, live countdowns, a live/upcoming/total stats bar, and a click-through **event detail view** (desktop modal / web page). |
+| **Favorites** | Star event types; filter to favorites and optionally **notify only for favorites**. |
+| **Calendar export** | Per-event or filtered **.ics** export, plus a subscribable web feed at `/calendar.ics`. |
+| **Notifications** | Desktop + in-app alerts, **webhooks** (Discord/Slack/custom, optionally **HMAC-signed**), and **Telegram** — when *new* events appear in your regions. |
+| **Config import/export** | Back up or move your settings from either UI. |
+| **Async + responsive** | `async`/`await` (httpx) fetches off the GUI thread, with a skeleton loading screen. |
+| **Persistence** | **SQLite** (indexed) caches events for offline viewing; old events auto-pruned. |
+| **Background updates** | **APScheduler** on a configurable interval; the web view auto-detects new events. |
+| **Distribution** | **CI** (pytest matrix), a **Dockerfile** for the web app, and a one-file **Windows .exe** built on release. |
+| **Graceful errors** | Network/format failures never crash the UI — cached data stays visible with a localized message. |
+| **Tested** | Deterministic, offline **pytest** suite (27 tests) covering core, service, web, calendar, favorites, HMAC, and the scheduler. |
 
 ---
 
@@ -137,7 +144,23 @@ python -m pytest -q
 ```
 
 The suite is fully offline (a fake source + temp DB) and won't touch your real
-`config.json` or `data/`.
+`config.json` or `data/`. It also runs in **CI** on every push (Python 3.11–3.13).
+
+## Build & deploy
+
+**Docker (web app)**
+```bash
+docker build -t poketrack .
+docker run -p 5000:5000 poketrack      # http://localhost:5000/
+```
+
+**Standalone Windows executable**
+```bash
+pip install pyinstaller
+pyinstaller --noconfirm PokeTrack.spec  # -> dist/PokeTrack.exe
+```
+On GitHub, publishing a Release triggers `.github/workflows/release.yml`, which
+builds `PokeTrack.exe` and attaches it to that release automatically.
 
 ---
 

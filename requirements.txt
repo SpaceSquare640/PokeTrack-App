@@ -8,3 +8,4 @@ httpx>=0.27.0           # Async HTTP client for non-blocking event fetches
 beautifulsoup4>=4.12.0  # HTML fallback parser (official blog source)
 python-dateutil>=2.9.0  # Robust date parsing helpers
 plyer>=2.1.0            # Optional desktop notifications (gracefully skipped if unavailable)
+pystray>=0.19.0        # Optional system-tray icon for the desktop app (optional)

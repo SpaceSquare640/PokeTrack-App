@@ -30,6 +30,7 @@ from ..app_context import ROOT
 from ..core.asyncrunner import RUNNER
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService, RefreshResult
+from . import tray as tray_mod
 from .images import ImageLoader
 from .theme import FONT_FAMILY, MIDNIGHT_BLUE as C, status_color
 
@@ -51,8 +52,10 @@ class PokeTrackApp(ctk.CTk):
         # Filter state (preserved across language re-renders).
         self._search_text: str = ""
         self._type_filter: str | None = None       # raw event_type, or None = all
+        self._favorites_only: bool = False
         self._search_job: str | None = None         # debounce handle
         self._web_proc: subprocess.Popen | None = None
+        self._tray = None                            # lazily-created system tray icon
         # True until the first fetch resolves — drives the skeleton loading state.
         self._loading: bool = self.service.last_updated() is None
 
@@ -245,6 +248,19 @@ class PokeTrackApp(ctk.CTk):
         current = self._type_display(self._type_filter) if self._type_filter else self.t("events.all_types")
         self.type_menu.set(current)
 
+        self.fav_btn = ctk.CTkButton(
+            tools, text="★ " + self.t("events.favorites"), height=36, width=120, corner_radius=8,
+            font=self.font_small, command=self._on_toggle_favorites, hover_color=C["border"],
+            fg_color=C["primary"] if self._favorites_only else C["surface_alt"],
+            text_color="#FFFFFF" if self._favorites_only else C["text"],
+        )
+        self.fav_btn.grid(row=0, column=2, sticky="e", padx=(10, 0))
+        ctk.CTkButton(
+            tools, text="📅", height=36, width=44, corner_radius=8, font=self.font_body,
+            command=self._on_export_calendar, fg_color=C["surface_alt"], hover_color=C["border"],
+            text_color=C["text"],
+        ).grid(row=0, column=3, sticky="e", padx=(8, 0))
+
         # Scroll area
         self.events_scroll = ctk.CTkScrollableFrame(
             self.content, fg_color="transparent",
@@ -266,6 +282,7 @@ class PokeTrackApp(ctk.CTk):
         events = self.service.get_events(
             search=self._search_text or None,
             event_types=[self._type_filter] if self._type_filter else None,
+            favorites_only=self._favorites_only,
         )
         self._update_header_metrics(events)
 
@@ -381,8 +398,8 @@ class PokeTrackApp(ctk.CTk):
         region_label = self.t(f"regions.{event.region}")
         meta = (
             f"{self.t('events.region')}: {region_label}    "
-            f"{self.t('events.starts')}: {event.format_time(event.start)}    "
-            f"{self.t('events.ends')}: {event.format_time(event.end)}"
+            f"{self.t('events.starts')}: {self.service.format_time(event.start)}    "
+            f"{self.t('events.ends')}: {self.service.format_time(event.end)}"
         )
         ctk.CTkLabel(
             content, text=meta, font=self.font_small, text_color=C["text_muted"],
@@ -399,35 +416,119 @@ class PokeTrackApp(ctk.CTk):
                 wraplength=560, justify="left", anchor="w",
             ).grid(row=3, column=0, sticky="ew", pady=(0, 6))
 
-        # The whole card is clickable; this is just the affordance hint.
-        if event.link:
-            ctk.CTkLabel(
-                content, text=self.t("events.view_details") + "  ↗", font=self.font_small,
-                text_color=C["accent"], anchor="w",
-            ).grid(row=4, column=0, sticky="w", pady=(0, 2))
-            self._bind_open(card, event.link)
+        ctk.CTkLabel(
+            content, text=self.t("events.view_details") + "  →", font=self.font_small,
+            text_color=C["accent"], anchor="w",
+        ).grid(row=4, column=0, sticky="w", pady=(0, 2))
 
-    def _bind_open(self, root_widget, url: str) -> None:
-        """Make a card (and all its children) open ``url`` on left-click."""
+        # Favorite star (overlay, top-right) — excluded from the card click.
+        fav_on = self.service.is_favorite(event.event_type)
+        star = ctk.CTkButton(
+            card, text="★" if fav_on else "☆", width=30, height=30, corner_radius=15,
+            font=self.font_body, fg_color=C["surface_alt"], hover_color=C["border"],
+            text_color=C["warning"] if fav_on else C["text_muted"],
+            command=lambda t=event.event_type: self._toggle_favorite(t),
+        )
+        star.place(relx=1.0, x=-10, y=10, anchor="ne")
+
+        # Whole card opens the in-app detail view.
+        self._bind_click(card, lambda e=event: self._open_detail(e), exclude=[star])
+
+    def _bind_click(self, root_widget, callback, exclude=()) -> None:
+        """Bind left-click on a widget + all descendants to ``callback``.
+
+        Widgets in ``exclude`` keep their own handlers (e.g. the favorite star).
+        """
+        excluded = set(exclude)
+
         def handler(_event=None):
-            if url:
-                webbrowser.open(url)
+            callback()
 
         stack = [root_widget]
         while stack:
             widget = stack.pop()
+            if widget in excluded:
+                continue
             try:
                 widget.bind("<Button-1>", handler)
-            except Exception:  # noqa: BLE001
-                pass
-            try:
                 widget.configure(cursor="hand2")
-            except Exception:  # noqa: BLE001 - not all widgets accept cursor
+            except Exception:  # noqa: BLE001 - not all widgets accept cursor/binds
                 pass
             try:
                 stack.extend(widget.winfo_children())
             except Exception:  # noqa: BLE001
                 pass
+
+    def _toggle_favorite(self, event_type: str) -> None:
+        self.service.toggle_favorite(event_type)
+        self._render_events()
+
+    def _open_detail(self, event) -> None:
+        """In-app detail window for an event (Midnight Blue, localized)."""
+        win = ctk.CTkToplevel(self)
+        win.title(event.name)
+        win.geometry("560x640")
+        win.configure(fg_color=C["bg"])
+        win.transient(self)
+        try:
+            win.after(50, win.lift)
+        except Exception:  # noqa: BLE001
+            pass
+
+        body = ctk.CTkScrollableFrame(win, fg_color="transparent")
+        body.pack(fill="both", expand=True, padx=16, pady=16)
+        body.grid_columnconfigure(0, weight=1)
+
+        status = event.status()
+        badge_key = {"active": "events.active_badge", "upcoming": "events.upcoming_badge",
+                     "ended": "events.ended_badge"}.get(status)
+        top = ctk.CTkFrame(body, fg_color="transparent")
+        top.grid(row=0, column=0, sticky="w")
+        if badge_key:
+            ctk.CTkLabel(top, text=f"  {self.t(badge_key)}  ", font=self.font_badge,
+                         fg_color=C["surface_alt"], text_color=status_color(status),
+                         corner_radius=6).grid(row=0, column=0, padx=(0, 8))
+        cd = self.service.countdown(event)
+        if cd:
+            ctk.CTkLabel(top, text=cd, font=self.font_small, text_color=status_color(status)).grid(row=0, column=1)
+
+        ctk.CTkLabel(body, text=event.name, font=self.font_title, text_color=C["text"],
+                     wraplength=500, justify="left", anchor="w").grid(row=1, column=0, sticky="ew", pady=(10, 6))
+
+        desc = self.service.description(event)
+        if desc:
+            ctk.CTkLabel(body, text=desc, font=self.font_body, text_color=C["text_muted"],
+                         wraplength=500, justify="left", anchor="w").grid(row=2, column=0, sticky="ew", pady=(0, 10))
+
+        meta = (
+            f"{self.t('events.region')}: {self.t('regions.' + event.region)}\n"
+            f"{self.t('events.type')}: {event.type_label or '—'}\n"
+            f"{self.t('events.starts')}: {self.service.format_time(event.start)}\n"
+            f"{self.t('events.ends')}: {self.service.format_time(event.end)}"
+        )
+        ctk.CTkLabel(body, text=meta, font=self.font_small, text_color=C["text"],
+                     justify="left", anchor="w").grid(row=3, column=0, sticky="w", pady=(0, 10))
+
+        if event.bosses:
+            ctk.CTkLabel(body, text=self.t("desc.featured_raids", names=", ".join(event.bosses)),
+                         font=self.font_small, text_color=C["text_muted"], wraplength=500,
+                         justify="left", anchor="w").grid(row=4, column=0, sticky="w", pady=(0, 6))
+        if event.promocodes:
+            ctk.CTkLabel(body, text=self.t("desc.promo", codes=", ".join(event.promocodes)),
+                         font=self.font_small, text_color=C["text_muted"], wraplength=500,
+                         justify="left", anchor="w").grid(row=5, column=0, sticky="w", pady=(0, 6))
+
+        actions = ctk.CTkFrame(body, fg_color="transparent")
+        actions.grid(row=6, column=0, sticky="w", pady=(12, 0))
+        if event.link:
+            ctk.CTkButton(actions, text=self.t("events.view_details") + " ↗", height=34,
+                          corner_radius=8, font=self.font_small, fg_color=C["primary"],
+                          hover_color=C["primary_hover"], text_color="#FFFFFF",
+                          command=lambda u=event.link: webbrowser.open(u)).grid(row=0, column=0, padx=(0, 8))
+        ctk.CTkButton(actions, text="📅 " + self.t("events.add_to_calendar"), height=34,
+                      corner_radius=8, font=self.font_small, fg_color=C["surface_alt"],
+                      hover_color=C["border"], text_color=C["text"],
+                      command=lambda e=event: self._export_one(e)).grid(row=0, column=1)
 
     def _update_header_metrics(self, events: list) -> None:
         if not hasattr(self, "stat_total") or not self.stat_total.winfo_exists():
@@ -491,7 +592,13 @@ class PokeTrackApp(ctk.CTk):
             card, text=self.t("settings.notifications_hint"), variable=self._notif_var,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
             text_color=C["text"], border_color=C["border"], checkmark_color="#FFFFFF",
-        ).grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
+        ).grid(row=1, column=0, sticky="w", padx=16, pady=(0, 6))
+        self._notif_fav_var = ctk.BooleanVar(value=bool(self.service.config.get("notify_favorites_only", False)))
+        ctk.CTkCheckBox(
+            card, text=self.t("settings.notify_favorites"), variable=self._notif_fav_var,
+            font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
+            text_color=C["text"], border_color=C["border"], checkmark_color="#FFFFFF",
+        ).grid(row=2, column=0, sticky="w", padx=16, pady=(0, 14))
 
         # Webhook (custom URL)
         card = self._settings_card(scroll, 4, self.t("settings.webhook"))
@@ -560,13 +667,65 @@ class PokeTrackApp(ctk.CTk):
         self.config_status = ctk.CTkLabel(card, text="", font=self.font_small, text_color=C["text_muted"])
         self.config_status.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 12))
 
+        # Telegram alerts
+        card = self._settings_card(scroll, 7, self.t("settings.telegram"))
+        self.tg_token_entry = ctk.CTkEntry(
+            card, font=self.font_body, fg_color=C["surface_alt"], border_color=C["border"],
+            text_color=C["text"], show="•", placeholder_text=self.t("settings.telegram_token"),
+        )
+        self.tg_token_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 6))
+        tok = self.service.config.get("telegram_bot_token", "")
+        if tok:
+            self.tg_token_entry.insert(0, tok)
+        self.tg_chat_entry = ctk.CTkEntry(
+            card, font=self.font_body, fg_color=C["surface_alt"], border_color=C["border"],
+            text_color=C["text"], placeholder_text=self.t("settings.telegram_chat"),
+        )
+        self.tg_chat_entry.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 14))
+        chat = self.service.config.get("telegram_chat_id", "")
+        if chat:
+            self.tg_chat_entry.insert(0, chat)
+
+        # Time format + display timezone
+        card = self._settings_card(scroll, 8, self.t("settings.time_format"))
+        trow = ctk.CTkFrame(card, fg_color="transparent")
+        trow.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
+        self.time_fmt_menu = ctk.CTkOptionMenu(
+            trow, values=[self.t("settings.time_24h"), self.t("settings.time_12h")], width=130,
+            font=self.font_body, fg_color=C["surface_alt"], button_color=C["primary"],
+            button_hover_color=C["primary_hover"], text_color=C["text"],
+            dropdown_fg_color=C["surface_alt"], dropdown_hover_color=C["border"], dropdown_text_color=C["text"],
+        )
+        self.time_fmt_menu.grid(row=0, column=0, padx=(0, 10))
+        self.time_fmt_menu.set(
+            self.t("settings.time_12h") if self.service.config.get("time_format") == "12h"
+            else self.t("settings.time_24h")
+        )
+        self.tz_entry = ctk.CTkEntry(
+            trow, width=200, font=self.font_body, fg_color=C["surface_alt"], border_color=C["border"],
+            text_color=C["text"], placeholder_text=self.t("settings.timezone"),
+        )
+        self.tz_entry.grid(row=0, column=1)
+        tz = self.service.config.get("display_timezone", "")
+        if tz:
+            self.tz_entry.insert(0, tz)
+
+        # Minimize to tray
+        card = self._settings_card(scroll, 9, self.t("settings.tray"))
+        self._tray_var = ctk.BooleanVar(value=bool(self.service.config.get("close_to_tray", False)))
+        ctk.CTkCheckBox(
+            card, text=self.t("settings.tray"), variable=self._tray_var, font=self.font_body,
+            fg_color=C["primary"], hover_color=C["primary_hover"], text_color=C["text"],
+            border_color=C["border"], checkmark_color="#FFFFFF",
+        ).grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
+
         ctk.CTkButton(
             scroll, text=self.t("settings.save"), height=40, width=160, corner_radius=8,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
             text_color="#FFFFFF", command=self._on_save_settings,
-        ).grid(row=7, column=0, sticky="w", pady=(6, 4))
+        ).grid(row=10, column=0, sticky="w", pady=(6, 4))
         self.saved_label = ctk.CTkLabel(scroll, text="", font=self.font_small, text_color=C["success"])
-        self.saved_label.grid(row=8, column=0, sticky="w", pady=(0, 8))
+        self.saved_label.grid(row=11, column=0, sticky="w", pady=(0, 8))
 
     def _settings_card(self, parent, row: int, title: str) -> ctk.CTkFrame:
         card = ctk.CTkFrame(parent, fg_color=C["surface"], corner_radius=12,
@@ -611,6 +770,48 @@ class PokeTrackApp(ctk.CTk):
                     break
         self._render_events()
 
+    def _on_toggle_favorites(self) -> None:
+        self._favorites_only = not self._favorites_only
+        if hasattr(self, "fav_btn") and self.fav_btn.winfo_exists():
+            self.fav_btn.configure(
+                fg_color=C["primary"] if self._favorites_only else C["surface_alt"],
+                text_color="#FFFFFF" if self._favorites_only else C["text"],
+            )
+        self._render_events()
+
+    def _current_filtered_events(self) -> list:
+        return self.service.get_events(
+            search=self._search_text or None,
+            event_types=[self._type_filter] if self._type_filter else None,
+            favorites_only=self._favorites_only,
+        )
+
+    def _on_export_calendar(self) -> None:
+        path = filedialog.asksaveasfilename(
+            defaultextension=".ics", initialfile="poketrack.ics",
+            filetypes=[("iCalendar", "*.ics"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            self.service.export_calendar(path, self._current_filtered_events())
+            self._set_status(self.t("events.export_calendar") + " ✓", C["success"])
+        except OSError as exc:  # noqa: BLE001
+            logger.error("Calendar export failed: %s", exc)
+
+    def _export_one(self, event) -> None:
+        safe = "".join(c if c.isalnum() else "_" for c in event.event_id)[:50] or "event"
+        path = filedialog.asksaveasfilename(
+            defaultextension=".ics", initialfile=f"{safe}.ics",
+            filetypes=[("iCalendar", "*.ics")],
+        )
+        if not path:
+            return
+        try:
+            self.service.export_calendar(path, [event])
+        except OSError as exc:  # noqa: BLE001
+            logger.error("ICS export failed: %s", exc)
+
     # ------------------------------------------------------------------ #
     # Event handlers                                                     #
     # ------------------------------------------------------------------ #
@@ -625,8 +826,15 @@ class PokeTrackApp(ctk.CTk):
         regions = [r for r, var in self._region_vars.items() if var.get()]
         self.service.set_regions(regions)
         self.service.set_notifications(self._notif_var.get())
+        self.service.set_notify_favorites_only(self._notif_fav_var.get())
         self.service.set_webhook(self.webhook_entry.get())
         self.service.set_webhook_secret(self.webhook_secret_entry.get())
+        self.service.set_telegram(self.tg_token_entry.get(), self.tg_chat_entry.get())
+        self.service.set_time_format(
+            "12h" if self.time_fmt_menu.get() == self.t("settings.time_12h") else "24h"
+        )
+        self.service.set_display_timezone(self.tz_entry.get())
+        self.service.set_close_to_tray(self._tray_var.get())
         try:
             minutes = int(self.interval_entry.get())
         except (ValueError, TypeError):
@@ -703,13 +911,15 @@ class PokeTrackApp(ctk.CTk):
         host = self.service.config.get("web.host", "127.0.0.1")
         port = self.service.config.get("web.port", 5000)
         url = f"http://{host}:{port}/"
-        if self._web_proc is None or self._web_proc.poll() is not None:
-            try:
-                self._web_proc = subprocess.Popen(
-                    [sys.executable, str(ROOT / "run_web.py")], cwd=str(ROOT)
-                )
-            except Exception as exc:  # noqa: BLE001
-                logger.error("Could not start web server: %s", exc)
+        # In a frozen build there's no run_web.py beside the exe to launch.
+        if not getattr(sys, "frozen", False):
+            if self._web_proc is None or self._web_proc.poll() is not None:
+                try:
+                    self._web_proc = subprocess.Popen(
+                        [sys.executable, str(ROOT / "run_web.py")], cwd=str(ROOT)
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.error("Could not start web server: %s", exc)
         self.after(1500, lambda: webbrowser.open(url))
 
     # ------------------------------------------------------------------ #
@@ -727,12 +937,26 @@ class PokeTrackApp(ctk.CTk):
                     self._apply_image(*payload)
                 elif kind == "webhook_test":
                     self._apply_webhook_test(*payload)
+                elif kind == "tray":
+                    self._handle_tray(payload)
                 else:
                     self._handle_refresh_result(kind, payload)
         except queue.Empty:
             pass
         finally:
             self.after(200, self._poll_queue)
+
+    def _handle_tray(self, action: str) -> None:
+        if action == "show":
+            try:
+                self.deiconify()
+                self.lift()
+            except Exception:  # noqa: BLE001
+                pass
+        elif action == "refresh":
+            self._on_refresh()
+        elif action == "quit":
+            self._shutdown()
 
     def _apply_webhook_test(self, ok: bool, info: str) -> None:
         if hasattr(self, "webhook_status") and self.webhook_status.winfo_exists():
@@ -791,9 +1015,32 @@ class PokeTrackApp(ctk.CTk):
             self.updated_label.configure(text=self.t("events.last_updated", time=last_text))
 
     def _on_close(self) -> None:
+        # Optionally minimize to the system tray instead of quitting.
+        if self.service.config.get("close_to_tray", False) and tray_mod.available():
+            self._hide_to_tray()
+            return
+        self._shutdown()
+
+    def _hide_to_tray(self) -> None:
+        self.withdraw()
+        if self._tray is None:
+            self._tray = tray_mod.TrayIcon(
+                on_show=lambda: self._ui_queue.put(("tray", "show")),
+                on_refresh=lambda: self._ui_queue.put(("tray", "refresh")),
+                on_quit=lambda: self._ui_queue.put(("tray", "quit")),
+                title=self.t("app.title"),
+                labels=(self.t("nav.events"), self.t("nav.refresh"), "Quit"),
+            )
+            if not self._tray.start():
+                self._tray = None
+                self._shutdown()
+
+    def _shutdown(self) -> None:
         for shutdown in (self._image_loader.shutdown, RUNNER.shutdown):
             try:
                 shutdown()
             except Exception:  # noqa: BLE001
                 pass
+        if self._tray is not None:
+            self._tray.stop()
         self.destroy()

@@ -1,0 +1,36 @@
+name: Release Build
+
+# When a GitHub Release is published, build the standalone Windows desktop
+# executable and attach it to that release.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: pyinstaller --noconfirm PokeTrack.spec
+
+      - name: Attach PokeTrack.exe to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/PokeTrack.exe

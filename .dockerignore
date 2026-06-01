@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+# Never bake personal config (webhook URL/secret) or local data into the image.
+config.json
+data/
+!data/regions_map.json
+*.db
+*.db-wal
+*.db-shm
+dist/
+build/
+*.spec

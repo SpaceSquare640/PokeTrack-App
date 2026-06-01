@@ -29,6 +29,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "notifications": True,       # desktop/in-app alerts for new events
     "webhook_url": "",           # optional: POST new-event alerts here (Discord/Slack/custom)
     "webhook_secret": "",        # optional: HMAC-SHA256 signing key for webhook POSTs
+    "favorite_types": [],        # starred event types (for the Favorites filter)
+    "notify_favorites_only": False,  # only alert for new events of favorited types
+    "telegram_bot_token": "",    # optional: Telegram bot token for alerts
+    "telegram_chat_id": "",      # optional: Telegram chat id for alerts
+    "time_format": "24h",        # "24h" | "12h" — how event times are displayed
+    "display_timezone": "",      # "" = local; or an IANA name e.g. "Asia/Taipei"
+    "close_to_tray": False,      # desktop: minimize to system tray instead of quitting
     "prune_after_days": 45,      # drop events that ended more than N days ago
     "web": {
         "host": "127.0.0.1",
