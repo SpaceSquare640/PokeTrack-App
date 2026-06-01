@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_region ON events(region);
 CREATE INDEX IF NOT EXISTS idx_events_start  ON events(start_time);
+CREATE INDEX IF NOT EXISTS idx_events_name   ON events(name);
 """
 
 # Columns added after the initial release, applied as lightweight migrations so

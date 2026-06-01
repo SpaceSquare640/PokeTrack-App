@@ -14,9 +14,12 @@ parser or database directly — which keeps fetching and presentation separated.
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import threading
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Callable, Optional
 
 from ..config import Config
@@ -109,11 +112,34 @@ class PokeTrackService:
         except Exception:  # noqa: BLE001 - last-resort guard
             logger.exception("Unexpected refresh error")
             return RefreshResult(False, error_key="errors.generic")
+        return self._apply_fetch(events, existing, trigger_side_effects)
 
+    async def refresh_now_async(self, trigger_side_effects: bool = False) -> RefreshResult:
+        """Async counterpart of :meth:`refresh_now` for the desktop GUI.
+
+        Awaits the source's ``fetch_async`` (real async network I/O) and offloads
+        the synchronous DB work to a thread, so the Tk main loop never blocks.
+        """
+        source = get_source(self.config.get("source", "leekduck"))
+        existing = await asyncio.to_thread(self.db.existing_ids)
+        try:
+            events = await source.fetch_async()
+        except FetchError as exc:
+            logger.warning("Async fetch failed: %s", exc)
+            return RefreshResult(False, error_key="errors.network")
+        except ParseError as exc:
+            logger.warning("Async parse failed: %s", exc)
+            return RefreshResult(False, error_key="errors.parse")
+        except Exception:  # noqa: BLE001 - last-resort guard
+            logger.exception("Unexpected async refresh error")
+            return RefreshResult(False, error_key="errors.generic")
+        return await asyncio.to_thread(self._apply_fetch, events, existing, trigger_side_effects)
+
+    def _apply_fetch(self, events, existing, trigger_side_effects: bool) -> RefreshResult:
+        """Persist fetched events, detect new ones, prune, fire side effects."""
         with self._lock:
             count = self.db.upsert_events(events)
             self.db.prune_old(self.config.get("prune_after_days", 45))
-
         first_load = not existing
         new_events = [] if first_load else [e for e in events if e.event_id not in existing]
         result = RefreshResult(True, count=count, new_events=new_events, first_load=first_load)
@@ -147,8 +173,12 @@ class PokeTrackService:
     def _send_webhook(self, url: str, events: list[Event]) -> tuple[bool, str]:
         payload = [self._webhook_event(e) for e in events]
         return webhook.send(
-            url, self.t("notify.new_title"), self.t("notify.new_body", n=len(events)), payload
+            url, self.t("notify.new_title"), self.t("notify.new_body", n=len(events)),
+            payload, secret=self._webhook_secret(),
         )
+
+    def _webhook_secret(self) -> Optional[str]:
+        return (self.config.get("webhook_secret", "") or "").strip() or None
 
     def _webhook_event(self, event: Event) -> dict:
         return {
@@ -172,7 +202,10 @@ class PokeTrackService:
             "region": self.t("regions.Global"),
             "description": self.t("app.subtitle"),
         }]
-        return webhook.send(url, self.t("notify.new_title"), self.t("app.subtitle"), sample)
+        return webhook.send(
+            url, self.t("notify.new_title"), self.t("app.subtitle"), sample,
+            secret=self._webhook_secret(),
+        )
 
     # ------------------------------------------------------------------ #
     # Queries                                                            #
@@ -293,6 +326,55 @@ class PokeTrackService:
 
     def set_webhook(self, url: str) -> None:
         self.config.set("webhook_url", (url or "").strip())
+
+    def set_webhook_secret(self, secret: str) -> None:
+        self.config.set("webhook_secret", (secret or "").strip())
+
+    # ------------------------------------------------------------------ #
+    # Config import / export                                             #
+    # ------------------------------------------------------------------ #
+    def export_config(self, path: str | Path) -> str:
+        """Write the current settings to ``path`` as pretty JSON. Returns path."""
+        path = Path(path)
+        path.write_text(
+            json.dumps(self.config.data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        logger.info("Exported config to %s", path)
+        return str(path)
+
+    def export_config_json(self) -> str:
+        """Return the current settings as a JSON string (for web download)."""
+        return json.dumps(self.config.data, indent=2, ensure_ascii=False)
+
+    def import_config(self, source: "str | Path | dict") -> tuple[bool, str]:
+        """Import settings from a file path, a JSON string, or a dict.
+
+        Settings are deep-merged over the current config and persisted, then the
+        runtime bits that depend on config (language, scheduler interval) are
+        re-applied immediately. Returns ``(ok, detail)``.
+        """
+        try:
+            if isinstance(source, dict):
+                data = source
+            else:
+                text = (
+                    Path(source).read_text(encoding="utf-8")
+                    if Path(str(source)).exists()
+                    else str(source)
+                )
+                data = json.loads(text)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            logger.warning("Config import failed: %s", exc)
+            return False, str(exc)
+        if not isinstance(data, dict):
+            return False, "config must be a JSON object"
+
+        self.config.update(data)
+        # Re-apply settings that affect running components right away.
+        self.translator.set_language(self.config.get("language", "en"))
+        self._scheduler.reschedule(self.config.get("refresh_interval_minutes", 60))
+        logger.info("Imported config (%d top-level keys)", len(data))
+        return True, "ok"
 
     def _region_match(self, event: Event) -> bool:
         regions = self.config.get("regions", [GLOBAL])

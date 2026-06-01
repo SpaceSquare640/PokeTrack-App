@@ -22,10 +22,12 @@ import subprocess
 import sys
 import threading
 import webbrowser
+from tkinter import filedialog
 
 import customtkinter as ctk
 
 from ..app_context import ROOT
+from ..core.asyncrunner import RUNNER
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService, RefreshResult
 from .images import ImageLoader
@@ -51,6 +53,8 @@ class PokeTrackApp(ctk.CTk):
         self._type_filter: str | None = None       # raw event_type, or None = all
         self._search_job: str | None = None         # debounce handle
         self._web_proc: subprocess.Popen | None = None
+        # True until the first fetch resolves — drives the skeleton loading state.
+        self._loading: bool = self.service.last_updated() is None
 
         # Image cache: url -> CTkImage (created on the main thread). Pending maps
         # url -> labels awaiting that image; rebuilt every render.
@@ -266,10 +270,15 @@ class PokeTrackApp(ctk.CTk):
         self._update_header_metrics(events)
 
         if not events:
-            ctk.CTkLabel(
-                self.events_scroll, text=self.t("events.empty"),
-                font=self.font_body, text_color=C["text_muted"],
-            ).grid(row=0, column=0, sticky="w", padx=8, pady=24)
+            # Show a skeleton while the first fetch is still running; only fall
+            # back to the "empty" message once we actually have a result.
+            if self._loading and not self._search_text and not self._type_filter:
+                self._render_skeleton()
+            else:
+                ctk.CTkLabel(
+                    self.events_scroll, text=self.t("events.empty"),
+                    font=self.font_body, text_color=C["text_muted"],
+                ).grid(row=0, column=0, sticky="w", padx=8, pady=24)
             return
 
         buckets: dict[str, list] = {"active": [], "upcoming": [], "other": []}
@@ -294,6 +303,25 @@ class PokeTrackApp(ctk.CTk):
             for event in items:
                 self._build_event_card(event, row)
                 row += 1
+
+    def _render_skeleton(self, count: int = 6) -> None:
+        """Placeholder cards shown during the initial fetch (no flash of empty)."""
+        for row in range(count):
+            card = ctk.CTkFrame(
+                self.events_scroll, fg_color=C["surface"], corner_radius=12,
+                border_width=1, border_color=C["border"],
+            )
+            card.grid(row=row, column=0, sticky="ew", padx=6, pady=5)
+            card.grid_columnconfigure(1, weight=1)
+            # Thumbnail placeholder
+            ctk.CTkFrame(card, fg_color=C["surface_alt"], width=IMAGE_SIZE[0] + 8,
+                         height=IMAGE_SIZE[1] + 8, corner_radius=8).grid(
+                row=0, column=0, rowspan=3, padx=(12, 0), pady=12)
+            # Text line placeholders of varying widths
+            for r, width in ((0, 150), (1, 360), (2, 240)):
+                ctk.CTkFrame(card, fg_color=C["surface_alt"], width=width, height=12,
+                             corner_radius=6).grid(row=r, column=1, sticky="w", padx=16,
+                                                   pady=(14 if r == 0 else 6, 6))
 
     def _build_event_card(self, event, row: int) -> None:
         status = event.status()
@@ -488,6 +516,23 @@ class PokeTrackApp(ctk.CTk):
         ).grid(row=0, column=0)
         self.webhook_status = ctk.CTkLabel(wrow, text="", font=self.font_small, text_color=C["text_muted"])
         self.webhook_status.grid(row=0, column=1, padx=(10, 0))
+        # Webhook secret (HMAC signing key) — masked entry.
+        ctk.CTkLabel(
+            card, text=self.t("settings.webhook_secret"), font=self.font_small,
+            text_color=C["text_muted"],
+        ).grid(row=4, column=0, sticky="w", padx=16, pady=(2, 0))
+        self.webhook_secret_entry = ctk.CTkEntry(
+            card, font=self.font_body, fg_color=C["surface_alt"], border_color=C["border"],
+            text_color=C["text"], show="•",
+        )
+        self.webhook_secret_entry.grid(row=5, column=0, sticky="ew", padx=16, pady=(2, 4))
+        secret = self.service.config.get("webhook_secret", "")
+        if secret:
+            self.webhook_secret_entry.insert(0, secret)
+        ctk.CTkLabel(
+            card, text=self.t("settings.webhook_secret_hint"), font=self.font_small,
+            text_color=C["text_faint"], wraplength=520, justify="left",
+        ).grid(row=6, column=0, sticky="w", padx=16, pady=(0, 12))
 
         # Refresh interval
         card = self._settings_card(scroll, 5, self.t("settings.refresh_interval"))
@@ -498,13 +543,30 @@ class PokeTrackApp(ctk.CTk):
         self.interval_entry.insert(0, str(self.service.config.get("refresh_interval_minutes", 60)))
         self.interval_entry.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
 
+        # Configuration import / export
+        card = self._settings_card(scroll, 6, self.t("settings.config"))
+        crow = ctk.CTkFrame(card, fg_color="transparent")
+        crow.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 6))
+        ctk.CTkButton(
+            crow, text=self.t("settings.export_config"), height=32, width=150, corner_radius=6,
+            font=self.font_small, fg_color=C["surface_alt"], hover_color=C["border"],
+            text_color=C["text"], command=self._on_export_config,
+        ).grid(row=0, column=0, padx=(0, 10))
+        ctk.CTkButton(
+            crow, text=self.t("settings.import_config"), height=32, width=150, corner_radius=6,
+            font=self.font_small, fg_color=C["surface_alt"], hover_color=C["border"],
+            text_color=C["text"], command=self._on_import_config,
+        ).grid(row=0, column=1)
+        self.config_status = ctk.CTkLabel(card, text="", font=self.font_small, text_color=C["text_muted"])
+        self.config_status.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 12))
+
         ctk.CTkButton(
             scroll, text=self.t("settings.save"), height=40, width=160, corner_radius=8,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
             text_color="#FFFFFF", command=self._on_save_settings,
-        ).grid(row=6, column=0, sticky="w", pady=(6, 4))
+        ).grid(row=7, column=0, sticky="w", pady=(6, 4))
         self.saved_label = ctk.CTkLabel(scroll, text="", font=self.font_small, text_color=C["success"])
-        self.saved_label.grid(row=7, column=0, sticky="w", pady=(0, 8))
+        self.saved_label.grid(row=8, column=0, sticky="w", pady=(0, 8))
 
     def _settings_card(self, parent, row: int, title: str) -> ctk.CTkFrame:
         card = ctk.CTkFrame(parent, fg_color=C["surface"], corner_radius=12,
@@ -564,6 +626,7 @@ class PokeTrackApp(ctk.CTk):
         self.service.set_regions(regions)
         self.service.set_notifications(self._notif_var.get())
         self.service.set_webhook(self.webhook_entry.get())
+        self.service.set_webhook_secret(self.webhook_secret_entry.get())
         try:
             minutes = int(self.interval_entry.get())
         except (ValueError, TypeError):
@@ -587,11 +650,54 @@ class PokeTrackApp(ctk.CTk):
     def _on_refresh(self) -> None:
         self.refresh_btn.configure(state="disabled")
         self._set_status(self.t("status.fetching"), C["accent"])
-        threading.Thread(target=self._refresh_worker, daemon=True).start()
+        # Run the async refresh on the shared event loop — never blocks Tk.
+        future = RUNNER.submit(self.service.refresh_now_async(trigger_side_effects=True))
+        future.add_done_callback(self._on_async_refresh_done)
 
-    def _refresh_worker(self) -> None:
-        result = self.service.refresh_now(trigger_side_effects=True)
+    def _on_async_refresh_done(self, future) -> None:
+        # Runs on the async loop thread — only enqueue; the Tk poll loop renders.
+        try:
+            result = future.result()
+        except Exception:  # noqa: BLE001
+            logger.exception("Async refresh failed")
+            result = RefreshResult(False, error_key="errors.generic")
         self._ui_queue.put(("manual", result))
+
+    # --- config import/export -------------------------------------------- #
+    def _on_export_config(self) -> None:
+        path = filedialog.asksaveasfilename(
+            defaultextension=".json", initialfile="poketrack-config.json",
+            filetypes=[("JSON", "*.json"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            self.service.export_config(path)
+            self._set_config_status(self.t("settings.config_exported"), C["success"])
+        except OSError as exc:
+            logger.error("Config export failed: %s", exc)
+            self._set_config_status(self.t("settings.config_import_failed"), C["danger"])
+
+    def _on_import_config(self) -> None:
+        path = filedialog.askopenfilename(
+            filetypes=[("JSON", "*.json"), ("All files", "*.*")]
+        )
+        if not path:
+            return
+        ok, info = self.service.import_config(path)
+        if ok:
+            # Rebuild so language/regions/etc. from the imported file take effect,
+            # then report success on the freshly-built settings view.
+            self.title(self.t("app.title"))
+            self._build_ui()
+            self._set_config_status(self.t("settings.config_imported"), C["success"])
+        else:
+            logger.warning("Config import failed: %s", info)
+            self._set_config_status(self.t("settings.config_import_failed"), C["danger"])
+
+    def _set_config_status(self, text: str, color: str) -> None:
+        if hasattr(self, "config_status") and self.config_status.winfo_exists():
+            self.config_status.configure(text=text, text_color=color)
 
     def _open_web(self) -> None:
         host = self.service.config.get("web.host", "127.0.0.1")
@@ -653,6 +759,7 @@ class PokeTrackApp(ctk.CTk):
                 pass
 
     def _handle_refresh_result(self, source: str, result: RefreshResult) -> None:
+        self._loading = False  # first result in — stop showing the skeleton
         if hasattr(self, "refresh_btn") and self.refresh_btn.winfo_exists():
             self.refresh_btn.configure(state="normal")
         if not result.ok:
@@ -684,8 +791,9 @@ class PokeTrackApp(ctk.CTk):
             self.updated_label.configure(text=self.t("events.last_updated", time=last_text))
 
     def _on_close(self) -> None:
-        try:
-            self._image_loader.shutdown()
-        except Exception:  # noqa: BLE001
-            pass
+        for shutdown in (self._image_loader.shutdown, RUNNER.shutdown):
+            try:
+                shutdown()
+            except Exception:  # noqa: BLE001
+                pass
         self.destroy()

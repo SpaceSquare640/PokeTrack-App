@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# Map the ?status=… flag to a localized message + colour. #}
+{% set status_map = {
+  "saved": ("settings.saved", "text-midnight-success"),
+  "exported": ("settings.config_exported", "text-midnight-success"),
+  "imported": ("settings.config_imported", "text-midnight-success"),
+  "import_failed": ("settings.config_import_failed", "text-midnight-danger")
+} %}
+
+<header class="sticky top-0 z-20 bg-midnight-bgAlt/95 backdrop-blur border-b border-midnight-border">
+  <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+    <a href="{{ url_for('index') }}" class="text-midnight-accent text-sm hover:underline shrink-0">← {{ t('nav.events') }}</a>
+    <h1 class="flex-1 text-xl font-bold text-midnight-text leading-tight">{{ t('settings.title') }}</h1>
+    <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
+      <select name="language" onchange="this.form.submit()"
+              class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                     px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+        {% for code in languages %}
+          <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-6 py-6 space-y-6">
+
+  {% if status and status in status_map %}
+    <div class="rounded-lg border border-midnight-border bg-midnight-surface px-4 py-3 text-sm {{ status_map[status][1] }}">
+      {{ t(status_map[status][0]) }}
+    </div>
+  {% endif %}
+
+  <!-- ───────── General settings (POST) ───────── -->
+  <form action="{{ url_for('settings_save') }}" method="post"
+        class="bg-midnight-surface border border-midnight-border rounded-xl p-6 space-y-5">
+
+    <div>
+      <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.webhook') }}</label>
+      <p class="text-xs text-midnight-faint mb-2">{{ t('settings.webhook_hint') }}</p>
+      <input type="text" name="webhook_url" value="{{ webhook_url }}" placeholder="{{ t('settings.webhook_placeholder') }}"
+             class="w-full bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                    px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.webhook_secret') }}</label>
+      <p class="text-xs text-midnight-faint mb-2">{{ t('settings.webhook_secret_hint') }}</p>
+      <input type="password" name="webhook_secret" value="{{ webhook_secret }}" autocomplete="off"
+             class="w-full bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                    px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+    </div>
+
+    <div class="flex flex-wrap gap-6">
+      <div>
+        <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.refresh_interval') }}</label>
+        <input type="number" name="refresh_interval_minutes" min="1" value="{{ interval }}"
+               class="w-32 bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                      px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.source') }}</label>
+        <select name="source"
+                class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                       px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+          <option value="leekduck" {% if source == 'leekduck' %}selected{% endif %}>Leek Duck</option>
+          <option value="blog" {% if source == 'blog' %}selected{% endif %}>Pokémon GO Blog</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="inline-flex items-center gap-2 text-sm text-midnight-text cursor-pointer select-none">
+      <input type="checkbox" name="notifications" {% if notifications %}checked{% endif %}
+             class="accent-midnight-primary w-4 h-4 rounded">
+      {{ t('settings.notifications_hint') }}
+    </label>
+
+    <div>
+      <button type="submit"
+              class="bg-midnight-primary hover:bg-midnight-primaryHover text-white text-sm font-medium
+                     rounded-lg px-5 py-2.5 transition-colors">
+        {{ t('settings.save') }}
+      </button>
+    </div>
+  </form>
+
+  <!-- ───────── Config import / export ───────── -->
+  <div class="bg-midnight-surface border border-midnight-border rounded-xl p-6">
+    <h2 class="text-sm font-semibold text-midnight-muted mb-4">{{ t('settings.config') }}</h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <a href="{{ url_for('settings_export') }}"
+         class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                rounded-lg px-4 py-2 border border-midnight-border transition-colors">
+        ↓ {{ t('settings.export_config') }}
+      </a>
+      <form action="{{ url_for('settings_import') }}" method="post" enctype="multipart/form-data"
+            class="flex items-center gap-2">
+        <input type="file" name="file" accept="application/json,.json" required
+               class="text-sm text-midnight-muted file:mr-3 file:rounded-lg file:border-0
+                      file:bg-midnight-surfaceAlt file:text-midnight-text file:px-3 file:py-2 file:cursor-pointer">
+        <button type="submit"
+                class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                       rounded-lg px-4 py-2 border border-midnight-border transition-colors">
+          ↑ {{ t('settings.import_config') }}
+        </button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

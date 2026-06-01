@@ -28,6 +28,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "database_path": "data/poketrack.db",
     "notifications": True,       # desktop/in-app alerts for new events
     "webhook_url": "",           # optional: POST new-event alerts here (Discord/Slack/custom)
+    "webhook_secret": "",        # optional: HMAC-SHA256 signing key for webhook POSTs
     "prune_after_days": 45,      # drop events that ended more than N days ago
     "web": {
         "host": "127.0.0.1",
@@ -92,6 +93,17 @@ class Config:
             for part in parts[:-1]:
                 node = node.setdefault(part, {})
             node[parts[-1]] = value
+            if save:
+                self.save()
+
+    def update(self, incoming: dict[str, Any], *, save: bool = True) -> None:
+        """Deep-merge an incoming settings dict over the current config.
+
+        Used by config import. Unknown keys are kept (forward-compatible); known
+        keys are overwritten. Always re-merged over defaults on next load.
+        """
+        with self._lock:
+            self._data = _deep_merge(self._data, copy.deepcopy(incoming))
             if save:
                 self.save()
 

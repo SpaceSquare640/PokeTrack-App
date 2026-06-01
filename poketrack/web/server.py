@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import logging
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Flask, Response, jsonify, redirect, render_template, request, url_for,
+)
 
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService
@@ -91,6 +93,56 @@ def create_app(service: PokeTrackService) -> Flask:
         q = request.args.get("q", "").strip()
         type_filter = request.args.get("type", "").strip()
         return jsonify([_view_model(e, service) for e in _filtered_events(q, type_filter)])
+
+    # ------------------------------------------------------------------ #
+    # Settings page (mirrors the desktop Settings tab)                   #
+    # ------------------------------------------------------------------ #
+    @app.get("/settings")
+    def settings():
+        cfg = service.config
+        return render_template(
+            "settings.html",
+            status=request.args.get("status", ""),
+            webhook_url=cfg.get("webhook_url", ""),
+            webhook_secret=cfg.get("webhook_secret", ""),
+            interval=cfg.get("refresh_interval_minutes", 60),
+            notifications=cfg.get("notifications", True),
+            source=cfg.get("source", "leekduck"),
+            **base_context(),
+        )
+
+    @app.post("/settings")
+    def settings_save():
+        service.set_webhook(request.form.get("webhook_url", ""))
+        service.set_webhook_secret(request.form.get("webhook_secret", ""))
+        service.set_notifications("notifications" in request.form)
+        source = request.form.get("source", "leekduck")
+        if source in ("leekduck", "blog"):
+            service.config.set("source", source)
+        try:
+            service.set_interval(int(request.form.get("refresh_interval_minutes", 60)))
+        except (TypeError, ValueError):
+            pass
+        return redirect(url_for("settings", status="saved"))
+
+    @app.get("/settings/export")
+    def settings_export():
+        return Response(
+            service.export_config_json(),
+            mimetype="application/json",
+            headers={"Content-Disposition": "attachment; filename=poketrack-config.json"},
+        )
+
+    @app.post("/settings/import")
+    def settings_import():
+        file = request.files.get("file")
+        if not file:
+            return redirect(url_for("settings", status="import_failed"))
+        try:
+            ok, _ = service.import_config(file.read().decode("utf-8"))
+        except Exception:  # noqa: BLE001
+            ok = False
+        return redirect(url_for("settings", status="imported" if ok else "import_failed"))
 
     return app
 

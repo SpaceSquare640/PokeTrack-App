@@ -5,8 +5,10 @@ __pycache__/
 venv/
 env/
 
-# PokéTrack runtime data
-data/
+# PokéTrack runtime data (SQLite DB + image cache are machine-specific).
+# Ignore everything under data/ EXCEPT the version-controlled region map.
+data/*
+!data/regions_map.json
 *.db
 *.db-wal
 *.db-shm

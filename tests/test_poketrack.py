@@ -37,6 +37,9 @@ class FakeSource:
     def fetch(self):
         return list(self._events)
 
+    async def fetch_async(self):
+        return list(self._events)
+
 
 def make_event(eid, name, *, region="Global", etype="community-day",
                start=None, end=None) -> Event:
@@ -263,3 +266,83 @@ def test_webhook_payload_building():
 
     generic, prov = webhook.build_payload("https://example.com/hook", "T", "msg", evs)
     assert prov == "generic" and generic["events"] == evs and generic["title"] == "T"
+
+
+def test_webhook_hmac_sign_and_verify():
+    from poketrack.core import webhook
+    body = b'{"hello":"world"}'
+    sig = webhook.sign("s3cret", body)
+    assert sig.startswith("sha256=")
+    assert webhook.verify_signature("s3cret", body, sig)            # correct secret
+    assert not webhook.verify_signature("wrong", body, sig)          # wrong secret
+    assert not webhook.verify_signature("s3cret", body, "sha256=00") # tampered sig
+    assert not webhook.verify_signature("", body, sig)               # no secret
+
+
+# --------------------------------------------------------------------------- #
+# Async refresh (Task 1b)                                                     #
+# --------------------------------------------------------------------------- #
+def test_async_refresh_detects_new(service, monkeypatch):
+    import asyncio
+    now = datetime.now()
+    e1 = make_event("1", "First", start=now + timedelta(days=1), end=now + timedelta(days=2))
+    e2 = make_event("2", "Second", start=now + timedelta(days=1), end=now + timedelta(days=2))
+    holder = {"events": [e1]}
+    monkeypatch.setattr(service_module, "get_source", lambda name: FakeSource(holder["events"]))
+
+    first = asyncio.run(service.refresh_now_async())
+    assert first.ok and first.first_load and first.new_count == 0
+
+    holder["events"] = [e1, e2]
+    second = asyncio.run(service.refresh_now_async())
+    assert second.ok and [e.event_id for e in second.new_events] == ["2"]
+
+
+# --------------------------------------------------------------------------- #
+# Scheduler re-scheduling integration (Task 3a)                               #
+# --------------------------------------------------------------------------- #
+def test_scheduler_reschedules_on_interval_change(service, monkeypatch):
+    from poketrack.core.scheduler import UpdateScheduler
+    # Guard against the (improbable) job firing mid-test: no real network.
+    monkeypatch.setattr(service_module, "get_source", lambda name: FakeSource([]))
+    service._scheduler.start()
+    try:
+        sched = service._scheduler._scheduler
+        job = sched.get_job(UpdateScheduler.JOB_ID)
+        assert job is not None
+        assert job.trigger.interval == timedelta(minutes=60)   # fixture default
+        service.set_interval(15)                                # update config + reschedule
+        job = sched.get_job(UpdateScheduler.JOB_ID)
+        assert job.trigger.interval == timedelta(minutes=15)
+        assert service.config.get("refresh_interval_minutes") == 15
+    finally:
+        service._scheduler.stop()
+
+
+# --------------------------------------------------------------------------- #
+# Config import / export (Task 2a)                                            #
+# --------------------------------------------------------------------------- #
+def test_config_export_and_import(service, tmp_path):
+    service.config.set("webhook_url", "https://example.com/hook")
+    path = tmp_path / "exp.json"
+    service.export_config(path)
+    assert path.exists()
+
+    service.config.set("webhook_url", "https://changed")          # mutate…
+    ok, _ = service.import_config(path)                           # …then restore from file
+    assert ok and service.config.get("webhook_url") == "https://example.com/hook"
+
+    # import from a dict re-applies language immediately
+    ok, _ = service.import_config({"language": "zh-Hant"})
+    assert ok and service.translator.language == "zh-Hant"
+
+
+# --------------------------------------------------------------------------- #
+# Externalised region map (Task 1a)                                           #
+# --------------------------------------------------------------------------- #
+def test_regions_loaded_from_external_map():
+    from poketrack.core import regions
+    assert "Asia" in regions.REGIONS and "Europe" in regions.REGIONS
+    assert regions.classify("Safari Zone: Tokyo") == "Asia"
+    regions.reload()  # re-read the JSON at runtime without error
+    assert regions.classify("GO Tour: London") == "Europe"
