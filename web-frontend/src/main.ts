@@ -73,6 +73,15 @@ function initPoller(state: PokeTrackState): void {
   window.setInterval(poll, 60_000);
 }
 
+/** Register the service worker so the app is installable and works offline. */
+function initServiceWorker(): void {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* SW is a progressive enhancement — ignore registration failures */
+    });
+  }
+}
+
 function main(): void {
   const state = getState();
   initCountdowns(state.i18n);
@@ -80,6 +89,7 @@ function main(): void {
   initFavorites();
   initRefreshButton();
   initPoller(state);
+  initServiceWorker();
 }
 
 if (document.readyState === "loading") {

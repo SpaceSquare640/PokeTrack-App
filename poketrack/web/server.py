@@ -72,6 +72,13 @@ def create_app(service: PokeTrackService) -> Flask:
             **base_context(),
         )
 
+    @app.get("/sw.js")
+    def service_worker():
+        # Served from root so the SW scope covers the whole app (not just /static).
+        resp = app.send_static_file("sw.js")
+        resp.headers["Service-Worker-Allowed"] = "/"
+        return resp
+
     @app.get("/event/<path:event_id>")
     def event_detail(event_id: str):
         event = service.db.get_event(event_id)

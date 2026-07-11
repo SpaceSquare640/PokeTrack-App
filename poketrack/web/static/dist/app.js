@@ -55,7 +55,7 @@ function E(t) {
   };
   n(), window.setInterval(n, 1e3);
 }
-function q() {
+function k() {
   const t = document.querySelector('input[name="q"]');
   if (!t) return;
   const e = Array.from(document.querySelectorAll("[data-event-card]"));
@@ -77,14 +77,14 @@ function q() {
   };
   t.addEventListener("input", r);
 }
-function A(t, e) {
+function q(t, e) {
   document.querySelectorAll(
     `[data-fav-form][data-fav-type="${CSS.escape(t)}"] [data-star]`
   ).forEach((o) => {
     o.textContent = e ? "★" : "☆", o.style.color = e ? "var(--mn-warning)" : "var(--mn-text-faint)";
   });
 }
-function b() {
+function A() {
   const t = Array.from(document.querySelectorAll("[data-fav-form]"));
   for (const e of t)
     e.addEventListener("submit", async (n) => {
@@ -94,7 +94,7 @@ function b() {
         r.disabled = !0;
         try {
           const a = await v(o);
-          A(o, a);
+          q(o, a);
         } catch {
           l("Network error");
         } finally {
@@ -103,7 +103,7 @@ function b() {
       }
     });
 }
-const C = {
+const b = {
   starts_in: "Starts in {time}",
   ends_in: "Ends in {time}",
   ended: "Ended",
@@ -112,14 +112,14 @@ const C = {
   minute: "{n}m",
   now: "moments"
 };
-function k() {
+function C() {
   const t = window.POKETRACK;
   return {
     count: t?.count ?? 0,
     q: t?.q ?? "",
     type: t?.type ?? "",
     status: t?.status ?? "",
-    i18n: { ...C, ...t?.i18n ?? {} }
+    i18n: { ...b, ...t?.i18n ?? {} }
   };
 }
 function L() {
@@ -149,8 +149,12 @@ function T(t) {
   };
   window.setInterval(e, 6e4);
 }
+function x() {
+  "serviceWorker" in navigator && navigator.serviceWorker.register("/sw.js").catch(() => {
+  });
+}
 function w() {
-  const t = k();
-  E(t.i18n), q(), b(), L(), T(t);
+  const t = C();
+  E(t.i18n), k(), A(), L(), T(t), x();
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", w) : w();
