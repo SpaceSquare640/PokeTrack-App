@@ -3,6 +3,43 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] — 2026-07-11 — Accessibility & polish pass
+
+Applied third-party UI skills (ibelick's baseline-ui/fixing-accessibility/
+fixing-metadata/fixing-motion-performance rule sets) to both interfaces —
+polish only, no behavior/feature changes.
+
+### Web
+- Accessible names on every select/icon-only control; `aria-pressed` on
+  favorite toggles (synced live from TS); toast is now a `role="status"`
+  live region; decorative glyphs marked `aria-hidden`.
+- `tabular-nums` on stats/countdowns/dates; `text-balance` on headings,
+  `text-pretty` on body copy; empty state now offers a "Clear filters"
+  next action.
+- `prefers-reduced-motion` respected; `min-h-screen` → `min-h-dvh`
+  (mobile-safe); Open Graph/Twitter meta tags added.
+- **Contrast fix (both UIs):** the shared `text_faint` palette color failed
+  WCAG AA for small text (3.07–3.96:1) — lightened to `#8091A8`
+  (4.55–5.86:1) in the single palette source both interfaces read.
+
+### Desktop
+- Every hardcoded white text color replaced with a new `on_primary` theme
+  token; the tray's fallback icon now derives its colors from the shared
+  palette instead of duplicating hex literals.
+- Fixed the one untranslated string in the app (tray's "Quit") — new
+  `nav.quit` key across all 5 languages.
+- Calendar-export button gets a text label (was icon-only); empty state
+  gets a "Clear filters" action when a filter is active.
+- Keyboard: Escape/window-close now dismiss the event detail modal; Enter
+  saves settings from any text field.
+- Minor spacing/sizing parity fixes (button heights, skeleton-to-card
+  padding) to remove a small layout jump.
+
+### Notes
+- 31 tests pass. Verified via real runtime construction and simulated
+  keyboard events (not just static analysis) — see commit messages for
+  the full verification trail.
+
 ## [1.5.0] — 2026-07-11 — Reminders, history, PWA, shiny bosses
 
 ### Added
@@ -95,6 +132,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.5.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.1
 [1.5.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.0
 [1.4.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.1
 [1.4.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.0
