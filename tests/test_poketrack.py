@@ -232,13 +232,13 @@ def test_event_highlights_and_description(service):
         "heading": "Raid Battles", "link": "https://x",
         "start": "2099-01-01T00:00:00.000", "end": "2099-01-02T00:00:00.000",
         "extraData": {
-            "raidbattles": {"bosses": [{"name": "Tapu Fini"}, {"name": "Mewtwo"}]},
+            "raidbattles": {"bosses": [{"name": "Tapu Fini", "canBeShiny": True}, {"name": "Mewtwo"}]},
             "promocodes": ["FREESTUFF"],
             "generic": {"hasSpawns": True, "hasFieldResearchTasks": False},
         },
     }
     e = Event.from_scrapedduck(item)
-    assert e.bosses == ["Tapu Fini", "Mewtwo"]
+    assert e.bosses == ["Tapu Fini ✨", "Mewtwo"]      # shiny-capable boss gets a ✨
     assert e.promocodes == ["FREESTUFF"]
     assert e.has_spawns and not e.has_research
     desc = service.description(e)
@@ -445,7 +445,7 @@ _SAMPLE_FEED = [
         "heading": "Raid Battles", "link": "https://x/raid-1", "image": "https://img/1",
         "start": "2099-07-13T06:00:00.000", "end": "2099-07-14T22:00:00.000",
         "extraData": {
-            "raidbattles": {"bosses": [{"name": "Mega Lucario"}]},
+            "raidbattles": {"bosses": [{"name": "Mega Lucario", "canBeShiny": True}]},
             "generic": {"hasSpawns": False, "hasFieldResearchTasks": True},
         },
     },
@@ -475,7 +475,7 @@ def test_parser_pure_python_path(monkeypatch):
     monkeypatch.setattr(native, "AVAILABLE", False)
     events = LeekDuckSource()._parse_text(_json.dumps(_SAMPLE_FEED))
     assert [e.event_id for e in events] == ["raid-1", "safari-2", "tz-3"]
-    assert events[0].bosses == ["Mega Lucario"] and events[0].has_research
+    assert events[0].bosses == ["Mega Lucario ✨"] and events[0].has_research
     assert events[1].region == "Asia" and events[1].promocodes == ["ABC123"]
     # tz-aware inputs are collapsed to naive local wall-clock time.
     assert events[2].start is not None and events[2].start.tzinfo is None

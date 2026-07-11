@@ -30,7 +30,14 @@ def _highlights_from_extra(extra: Any) -> dict[str, Any]:
         return out
     raid = extra.get("raidbattles") or {}
     if isinstance(raid, dict):
-        out["bosses"] = [b.get("name") for b in raid.get("bosses", []) if isinstance(b, dict) and b.get("name")]
+        # ponytail: shiny marked with a ✨ suffix on the name — the feed only
+        # gives name/image/canBeShiny, so no schema change. Upgrade to structured
+        # boss objects if per-boss fields (CP, image) are ever needed.
+        out["bosses"] = [
+            b["name"] + (" ✨" if b.get("canBeShiny") else "")
+            for b in raid.get("bosses", [])
+            if isinstance(b, dict) and b.get("name")
+        ]
     promos = extra.get("promocodes")
     if isinstance(promos, list):
         out["promocodes"] = [p for p in promos if isinstance(p, str)]

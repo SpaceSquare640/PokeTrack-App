@@ -112,7 +112,16 @@ fn parse_feed<'py>(
                     for boss in list {
                         if let Some(bn) = boss.get("name").and_then(Value::as_str) {
                             if !bn.is_empty() {
-                                bosses.push(bn.to_string());
+                                // Mark shiny-capable bosses with ✨ (mirrors the Python path).
+                                let shiny = boss
+                                    .get("canBeShiny")
+                                    .and_then(Value::as_bool)
+                                    .unwrap_or(false);
+                                bosses.push(if shiny {
+                                    format!("{bn} ✨")
+                                } else {
+                                    bn.to_string()
+                                });
                             }
                         }
                     }
