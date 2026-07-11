@@ -13,6 +13,8 @@ from PyInstaller.utils.hooks import collect_data_files
 datas = [
     ("languages.json", "."),
     ("data/regions_map.json", "data"),
+    ("assets/icon.png", "assets"),   # bundled so the desktop window/taskbar icon is set at runtime
+    ("assets/icon.ico", "assets"),
 ]
 datas += collect_data_files("customtkinter")
 
@@ -39,6 +41,7 @@ exe = EXE(
     a.datas,
     [],
     name="PokeTrack",
+    icon="assets/icon.ico",   # PokéTracker radar icon — embedded in the .exe (taskbar/Explorer)
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

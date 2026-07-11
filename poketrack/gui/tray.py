@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 import threading
 
+from ..app_context import RESOURCE_ROOT
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -25,7 +27,13 @@ def available() -> bool:
 
 
 def _icon_image():
-    # A simple Midnight Blue dot, drawn in code (no asset file needed).
+    """The PokéTracker radar icon, or a drawn Midnight Blue dot as a fallback."""
+    asset = RESOURCE_ROOT / "assets" / "icon.png"
+    try:
+        if asset.exists():
+            return Image.open(asset)
+    except Exception:  # noqa: BLE001 - fall through to the drawn fallback
+        logger.debug("Could not load tray icon asset", exc_info=True)
     img = Image.new("RGBA", (64, 64), (11, 17, 32, 255))   # #0B1120 background
     draw = ImageDraw.Draw(img)
     draw.ellipse((14, 14, 50, 50), fill=(56, 189, 248, 255))  # #38BDF8 accent

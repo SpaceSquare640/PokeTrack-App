@@ -3,6 +3,23 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] — 2026-07-11 — Icon update
+
+### Added
+- A real app icon (the "PokéTracker" radar mark) replacing the unbranded
+  defaults, wired into every surface:
+  - `assets/icon.ico` (multi-resolution) embedded into `PokeTrack.exe` via
+    PyInstaller.
+  - Desktop window/taskbar icon (`iconbitmap`, with a Pillow `iconphoto`
+    fallback) — best-effort, never blocks startup.
+  - System-tray icon (`poketrack/gui/tray.py`) now uses the real asset instead
+    of a code-drawn placeholder dot.
+  - Web favicon set (`favicon.ico` + 16/32/180/192/512 PNGs) linked from
+    `base.html` for browser tabs and "add to home screen".
+
+### Notes
+- No functional/behavioral changes; purely branding. 30 tests pass.
+
 ## [1.4.0] — 2026-07-11 — Polyglot
 
 PokéTrack becomes a **polyglot** application: each language does what it does
@@ -55,6 +72,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.4.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.1
 [1.4.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.0
 [1.3.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.3.0
 [1.2.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.2.0

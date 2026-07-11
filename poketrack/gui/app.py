@@ -26,7 +26,7 @@ from tkinter import filedialog
 
 import customtkinter as ctk
 
-from ..app_context import ROOT
+from ..app_context import RESOURCE_ROOT, ROOT
 from ..core.asyncrunner import RUNNER
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService, RefreshResult
@@ -79,6 +79,7 @@ class PokeTrackApp(ctk.CTk):
         self.geometry("1100x720")
         self.minsize(920, 580)
         self.configure(fg_color=C["bg"])
+        self._set_window_icon()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
         # Fonts (created after the Tk root exists).
@@ -1013,6 +1014,29 @@ class PokeTrackApp(ctk.CTk):
             last = self.service.last_updated()
             last_text = last.strftime("%b %d, %Y · %H:%M") if last else "—"
             self.updated_label.configure(text=self.t("events.last_updated", time=last_text))
+
+    def _set_window_icon(self) -> None:
+        """Set the window/taskbar icon from the bundled PokéTracker radar asset.
+
+        ``iconbitmap`` (native .ico, best Windows taskbar fidelity) is tried
+        first; ``iconphoto`` (PNG via Pillow) is the cross-platform fallback.
+        Both are best-effort — a missing/unreadable asset never blocks startup.
+        """
+        ico = RESOURCE_ROOT / "assets" / "icon.ico"
+        png = RESOURCE_ROOT / "assets" / "icon.png"
+        try:
+            if ico.exists():
+                self.iconbitmap(str(ico))
+                return
+        except Exception:  # noqa: BLE001 - fall through to iconphoto
+            pass
+        try:
+            if png.exists():
+                from PIL import Image, ImageTk
+                self._icon_photo = ImageTk.PhotoImage(Image.open(png))  # keep a ref
+                self.iconphoto(True, self._icon_photo)
+        except Exception:  # noqa: BLE001 - icon is cosmetic only
+            logger.debug("Could not set window icon", exc_info=True)
 
     def _on_close(self) -> None:
         # Optionally minimize to the system tray instead of quitting.
