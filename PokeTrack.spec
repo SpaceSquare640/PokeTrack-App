@@ -15,6 +15,8 @@ datas = [
     ("data/regions_map.json", "data"),
     ("assets/icon.png", "assets"),   # bundled so the desktop window/taskbar icon is set at runtime
     ("assets/icon.ico", "assets"),
+    ("assets/github_profile.png", "assets"),   # footer link icons
+    ("assets/discord.png", "assets"),
 ]
 datas += collect_data_files("customtkinter")
 

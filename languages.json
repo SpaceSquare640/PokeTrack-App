@@ -32,6 +32,8 @@
     "errors": { "network": "Network error: could not reach the event source. Showing cached data.", "parse": "Could not read event data (the source format may have changed).", "generic": "Something went wrong. Please try again." },
     "time": { "day": "{n}d", "hour": "{n}h", "minute": "{n}m", "now": "moments" },
     "notify": { "new_title": "PokéTrack — New Events", "new_body": "{n} new event(s) in your selected regions", "reminder_title": "PokéTrack — Starting Soon", "reminder_body": "{n} event(s) starting soon" },
+    "update": { "available": "Update available: v{version}" },
+    "footer": { "github": "GitHub", "discord": "Discord", "made_by": "Made by SpaceSquare640" },
     "regions": { "Global": "Global", "North America": "North America", "South America": "South America", "Europe": "Europe", "Asia": "Asia", "Oceania": "Oceania", "Africa": "Africa" },
     "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
@@ -68,6 +70,8 @@
     "errors": { "network": "網路錯誤：無法連線到活動來源，改為顯示快取資料。", "parse": "無法解析活動資料（來源格式可能已變更）。", "generic": "發生錯誤，請再試一次。" },
     "time": { "day": "{n} 天", "hour": "{n} 小時", "minute": "{n} 分鐘", "now": "片刻" },
     "notify": { "new_title": "PokéTrack — 新活動", "new_body": "你所選地區有 {n} 個新活動", "reminder_title": "PokéTrack — 即將開始", "reminder_body": "{n} 個活動即將開始" },
+    "update": { "available": "有新版本：v{version}" },
+    "footer": { "github": "GitHub", "discord": "Discord", "made_by": "由 SpaceSquare640 製作" },
     "regions": { "Global": "全球", "North America": "北美洲", "South America": "南美洲", "Europe": "歐洲", "Asia": "亞洲", "Oceania": "大洋洲", "Africa": "非洲" },
     "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
@@ -104,6 +108,8 @@
     "errors": { "network": "网络错误：无法连接到活动来源，改为显示缓存数据。", "parse": "无法解析活动数据（来源格式可能已更改）。", "generic": "发生错误，请再试一次。" },
     "time": { "day": "{n} 天", "hour": "{n} 小时", "minute": "{n} 分钟", "now": "片刻" },
     "notify": { "new_title": "PokéTrack — 新活动", "new_body": "你所选地区有 {n} 个新活动", "reminder_title": "PokéTrack — 即将开始", "reminder_body": "{n} 个活动即将开始" },
+    "update": { "available": "有新版本：v{version}" },
+    "footer": { "github": "GitHub", "discord": "Discord", "made_by": "由 SpaceSquare640 制作" },
     "regions": { "Global": "全球", "North America": "北美洲", "South America": "南美洲", "Europe": "欧洲", "Asia": "亚洲", "Oceania": "大洋洲", "Africa": "非洲" },
     "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
@@ -140,6 +146,8 @@
     "errors": { "network": "ネットワークエラー：ソースに接続できません。キャッシュを表示します。", "parse": "イベントデータを解析できません（形式が変更された可能性）。", "generic": "問題が発生しました。もう一度お試しください。" },
     "time": { "day": "{n}日", "hour": "{n}時間", "minute": "{n}分", "now": "まもなく" },
     "notify": { "new_title": "PokéTrack — 新着イベント", "new_body": "選択した地域に新着イベントが {n} 件", "reminder_title": "PokéTrack — まもなく開始", "reminder_body": "{n} 件のイベントがまもなく開始" },
+    "update": { "available": "新しいバージョン: v{version}" },
+    "footer": { "github": "GitHub", "discord": "Discord", "made_by": "SpaceSquare640 制作" },
     "regions": { "Global": "グローバル", "North America": "北アメリカ", "South America": "南アメリカ", "Europe": "ヨーロッパ", "Asia": "アジア", "Oceania": "オセアニア", "Africa": "アフリカ" },
     "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   },
@@ -176,6 +184,8 @@
     "errors": { "network": "네트워크 오류: 소스에 연결할 수 없습니다. 캐시된 데이터를 표시합니다.", "parse": "이벤트 데이터를 읽을 수 없습니다(형식이 변경되었을 수 있음).", "generic": "문제가 발생했습니다. 다시 시도하세요." },
     "time": { "day": "{n}일", "hour": "{n}시간", "minute": "{n}분", "now": "곧" },
     "notify": { "new_title": "PokéTrack — 새 이벤트", "new_body": "선택한 지역에 새 이벤트 {n}건", "reminder_title": "PokéTrack — 곧 시작", "reminder_body": "{n}개 이벤트가 곧 시작됩니다" },
+    "update": { "available": "새 버전: v{version}" },
+    "footer": { "github": "GitHub", "discord": "Discord", "made_by": "제작: SpaceSquare640" },
     "regions": { "Global": "글로벌", "North America": "북미", "South America": "남미", "Europe": "유럽", "Asia": "아시아", "Oceania": "오세아니아", "Africa": "아프리카" },
     "languages": { "en": "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", "ja": "日本語", "ko": "한국어" }
   }

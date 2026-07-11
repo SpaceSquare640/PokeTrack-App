@@ -62,8 +62,34 @@
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-midnight-bg text-midnight-text font-sans min-h-dvh antialiased">
-  {% block content %}{% endblock %}
+<body class="bg-midnight-bg text-midnight-text font-sans min-h-dvh antialiased flex flex-col">
+  {% if update %}
+    <a href="{{ update.url }}" target="_blank" rel="noopener"
+       class="block text-center text-sm bg-midnight-primary/15 border-b border-midnight-primary/40
+              text-midnight-accent hover:bg-midnight-primary/25 px-4 py-2 transition-colors">
+      ⬆ {{ t('update.available', version=update.version) }} →
+    </a>
+  {% endif %}
+
+  <div class="flex-1">{% block content %}{% endblock %}</div>
+
+  <footer class="border-t border-midnight-border mt-8">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-sm">
+      <a href="{{ github_profile_url }}" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
+                border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
+        <img src="{{ url_for('static', filename='icons/github-profile.png') }}" alt="" width="20" height="20" class="rounded-full">
+        {{ t('footer.github') }}
+      </a>
+      <a href="{{ discord_url }}" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
+                border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
+        <img src="{{ url_for('static', filename='icons/discord.png') }}" alt="" width="20" height="20" class="rounded">
+        {{ t('footer.discord') }}
+      </a>
+      <span class="text-midnight-faint">{{ t('footer.made_by') }}</span>
+    </div>
+  </footer>
   <!-- TypeScript front-end, compiled by Vite (web-frontend/) to a stable path. -->
   <script type="module" src="{{ url_for('static', filename='dist/app.js') }}"></script>
 </body>

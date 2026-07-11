@@ -22,10 +22,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable, Optional
 
+from .. import __version__
 from ..config import Config
 from ..i18n import Translator
 from . import calendar as ical
-from . import telegram, webhook
+from . import telegram, updates, webhook
 from .database import Database
 from .models import Event
 from .notify import notify
@@ -78,6 +79,10 @@ class PokeTrackService:
         self.on_update: Optional[Callable[[RefreshResult], None]] = None
         # Event IDs already reminded about, so a "starting soon" alert fires once.
         self._reminded: set[str] = set()
+        # Cached result of the GitHub update check (None = up to date / not checked).
+        self._update_available: Optional[dict] = None
+        # Optional callback fired when a newer release is detected (for the desktop UI).
+        self.on_update_available: Optional[Callable[[dict], None]] = None
 
     # ------------------------------------------------------------------ #
     # Lifecycle                                                          #
@@ -88,6 +93,9 @@ class PokeTrackService:
         # Reminder check runs every minute (independent of the fetch interval, so a
         # long refresh interval doesn't miss the "starts in X min" window).
         self._scheduler.add_interval_job(self._check_reminders, minutes=1, job_id="poketrack_reminders")
+        # Update check: once at startup (off-thread) + every 6 hours.
+        self._scheduler.add_interval_job(self._check_update, minutes=360, job_id="poketrack_update_check")
+        threading.Thread(target=self._check_update, daemon=True).start()
         if refresh_now:
             threading.Thread(target=self._scheduled_refresh, daemon=True).start()
 
@@ -200,6 +208,22 @@ class PokeTrackService:
             # persist the ID set if that ever matters.
             self._reminded.add(e.event_id)
         self._send_alert(due, self.t("notify.reminder_title"), self.t("notify.reminder_body", n=len(due)))
+
+    def _check_update(self) -> None:
+        """Check GitHub for a newer release; cache the result and notify the UI."""
+        info = updates.check(__version__)
+        if info and info != self._update_available:
+            self._update_available = info
+            logger.info("Update available: v%s", info["version"])
+            if self.on_update_available:
+                try:
+                    self.on_update_available(info)
+                except Exception:  # noqa: BLE001 - callback must not break the job
+                    logger.exception("on_update_available callback failed")
+
+    def latest_update(self) -> Optional[dict]:
+        """The cached ``{version, url}`` of a newer release, or None if up to date."""
+        return self._update_available
 
     def _send_alert(self, events: list[Event], title: str, body: str) -> None:
         """Fan an alert out to the enabled channels (desktop, webhook, Telegram)."""

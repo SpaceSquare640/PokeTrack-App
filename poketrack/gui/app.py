@@ -71,6 +71,20 @@ class PokeTrackApp(ctk.CTk):
 
         # Background refreshes/images push onto our queue; the main loop drains it.
         self.service.on_update = lambda result: self._ui_queue.put(("background", result))
+        # A newer GitHub release surfaces a footer "update available" badge.
+        self._update_info: dict | None = None
+        self.service.on_update_available = lambda info: self._ui_queue.put(("update", info))
+
+        # Footer link icons (GitHub profile + Discord), loaded once; optional.
+        self._footer_imgs: dict = {}
+        try:
+            from PIL import Image
+            for key, fn in (("github", "github_profile.png"), ("discord", "discord.png")):
+                path = RESOURCE_ROOT / "assets" / fn
+                if path.exists():
+                    self._footer_imgs[key] = ctk.CTkImage(Image.open(path), size=(18, 18))
+        except Exception:  # noqa: BLE001 - footer icons are cosmetic
+            self._footer_imgs = {}
 
         # --- appearance ---
         ctk.set_appearance_mode("Dark")
@@ -120,6 +134,7 @@ class PokeTrackApp(ctk.CTk):
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(1, weight=1)
 
+        self._build_footer()
         self._show_view(self._current_view)
 
     def _build_sidebar(self) -> None:
@@ -168,6 +183,53 @@ class PokeTrackApp(ctk.CTk):
         self.status_label.grid(row=7, column=0, sticky="sw", padx=20, pady=16)
 
         self._highlight_nav()
+
+    def _build_footer(self) -> None:
+        """Full-width bottom bar: update badge (when available) + profile/community links."""
+        footer = ctk.CTkFrame(self.container, fg_color=C["bg_alt"], corner_radius=0, height=46)
+        footer.grid(row=1, column=0, columnspan=2, sticky="ew")
+        footer.grid_propagate(False)
+        footer.grid_columnconfigure(0, weight=1)  # spacer pushes links to the right
+
+        # Update badge — left side, shown only when a newer release exists.
+        self.update_badge = ctk.CTkButton(
+            footer, text="", height=30, corner_radius=6, font=self.font_small,
+            fg_color=C["primary"], hover_color=C["primary_hover"], text_color=C["on_primary"],
+            command=self._on_open_release,
+        )
+        if self._update_info:
+            self._show_update_badge(self._update_info)
+
+        links = ctk.CTkFrame(footer, fg_color="transparent")
+        links.grid(row=0, column=1, sticky="e", padx=14, pady=8)
+        ctk.CTkButton(
+            links, text=" " + self.t("footer.github"), image=self._footer_imgs.get("github"),
+            width=110, height=30, corner_radius=6, font=self.font_small,
+            fg_color=C["surface_alt"], hover_color=C["border"], text_color=C["text"],
+            command=lambda: webbrowser.open("https://github.com/SpaceSquare640"),
+        ).grid(row=0, column=0, padx=(0, 8))
+        ctk.CTkButton(
+            links, text=" " + self.t("footer.discord"), image=self._footer_imgs.get("discord"),
+            width=110, height=30, corner_radius=6, font=self.font_small,
+            fg_color=C["surface_alt"], hover_color=C["border"], text_color=C["text"],
+            command=lambda: webbrowser.open("https://discord.gg/aaUQVJeCgC"),
+        ).grid(row=0, column=1, padx=(0, 12))
+        ctk.CTkLabel(
+            links, text=self.t("footer.made_by"), font=self.font_small, text_color=C["text_faint"],
+        ).grid(row=0, column=2)
+
+    def _show_update_badge(self, info: dict) -> None:
+        if hasattr(self, "update_badge") and self.update_badge.winfo_exists():
+            self.update_badge.configure(text="⬆ " + self.t("update.available", version=info["version"]))
+            self.update_badge.grid(row=0, column=0, sticky="w", padx=14, pady=8)
+
+    def _handle_update(self, info: dict) -> None:
+        self._update_info = info
+        self._show_update_badge(info)
+
+    def _on_open_release(self) -> None:
+        if self._update_info:
+            webbrowser.open(self._update_info.get("url", ""))
 
     def _highlight_nav(self) -> None:
         for view, btn in self._nav_buttons.items():
@@ -983,6 +1045,8 @@ class PokeTrackApp(ctk.CTk):
                     self._apply_webhook_test(*payload)
                 elif kind == "tray":
                     self._handle_tray(payload)
+                elif kind == "update":
+                    self._handle_update(payload)
                 else:
                     self._handle_refresh_result(kind, payload)
         except queue.Empty:
