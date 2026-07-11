@@ -10,10 +10,11 @@ export async function triggerRefresh(): Promise<RefreshResult> {
 }
 
 /** Read the currently-stored events (optionally filtered by search/type). */
-export async function fetchEvents(q: string, type: string): Promise<EventVM[]> {
+export async function fetchEvents(q: string, type: string, status = ""): Promise<EventVM[]> {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (type) params.set("type", type);
+  if (status) params.set("status", status);
   const qs = params.toString();
   const resp = await fetch("/api/events" + (qs ? "?" + qs : ""));
   if (!resp.ok) throw new Error(`events failed: ${resp.status}`);

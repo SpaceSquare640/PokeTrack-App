@@ -62,6 +62,14 @@
         <option value="{{ raw }}" {% if raw == current_type %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
+    <select name="status" onchange="this.form.submit()"
+            class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
+                   px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+      <option value="">{{ t('events.all_status') }}</option>
+      <option value="active" {% if current_status == 'active' %}selected{% endif %}>{{ t('events.active_badge') }}</option>
+      <option value="upcoming" {% if current_status == 'upcoming' %}selected{% endif %}>{{ t('events.upcoming_badge') }}</option>
+      <option value="ended" {% if current_status == 'ended' %}selected{% endif %}>{{ t('events.ended_badge') }}</option>
+    </select>
     <button type="submit"
             class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
                    rounded-lg px-4 py-2.5 border border-midnight-border transition-colors">
@@ -72,13 +80,13 @@
   <!-- ──────────────── Favorites + calendar ──────────────── -->
   <div class="flex flex-wrap items-center gap-3 mb-3">
     {% if favorites_only %}
-      <a href="{{ url_for('index', q=query or none, type=current_type or none) }}"
+      <a href="{{ url_for('index', q=query or none, type=current_type or none, status=current_status or none) }}"
          class="text-sm rounded-lg px-4 py-2 border border-midnight-primary text-midnight-accent bg-midnight-surfaceAlt">★ {{ t('events.favorites') }}</a>
     {% else %}
-      <a href="{{ url_for('index', q=query or none, type=current_type or none, fav=1) }}"
+      <a href="{{ url_for('index', q=query or none, type=current_type or none, status=current_status or none, fav=1) }}"
          class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">☆ {{ t('events.favorites') }}</a>
     {% endif %}
-    <a href="{{ url_for('calendar_ics', q=query or none, type=current_type or none, fav=(1 if favorites_only else none)) }}"
+    <a href="{{ url_for('calendar_ics', q=query or none, type=current_type or none, status=current_status or none, fav=(1 if favorites_only else none)) }}"
        class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">📅 {{ t('events.export_calendar') }}</a>
   </div>
 
@@ -180,6 +188,7 @@
     count: {{ events|length }},
     q: {{ query|tojson }},
     type: {{ current_type|tojson }},
+    status: {{ current_status|tojson }},
     i18n: {
       starts_in: {{ t('events.starts_in')|tojson }},
       ends_in:   {{ t('events.ends_in')|tojson }},

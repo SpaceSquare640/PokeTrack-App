@@ -61,6 +61,12 @@
                       px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
       </div>
       <div>
+        <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.remind_before') }}</label>
+        <input type="number" name="remind_before_minutes" min="0" value="{{ remind_before }}"
+               class="w-32 bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                      px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+      </div>
+      <div>
         <label class="block text-sm font-semibold text-midnight-muted mb-2">{{ t('settings.source') }}</label>
         <select name="source"
                 class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border

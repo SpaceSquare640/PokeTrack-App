@@ -43,10 +43,11 @@ def create_app(service: PokeTrackService) -> Flask:
             "selected_regions": service.config.get("regions", ["Global"]),
         }
 
-    def _filtered(q: str, type_filter: str, favorites_only: bool):
+    def _filtered(q: str, type_filter: str, favorites_only: bool, status: str = ""):
         return service.get_events(
             search=q or None,
             event_types=[type_filter] if type_filter else None,
+            statuses=[status] if status else None,
             favorites_only=favorites_only,
         )
 
@@ -54,8 +55,9 @@ def create_app(service: PokeTrackService) -> Flask:
     def index():
         q = request.args.get("q", "").strip()
         type_filter = request.args.get("type", "").strip()
+        status = request.args.get("status", "").strip()
         fav = request.args.get("fav") == "1"
-        events = _filtered(q, type_filter, fav)
+        events = _filtered(q, type_filter, fav, status)
         last = service.last_updated()
         return render_template(
             "index.html",
@@ -63,6 +65,7 @@ def create_app(service: PokeTrackService) -> Flask:
             stats=_stats(events),
             types=[(tp, tp.replace("-", " ").title()) for tp in service.available_types()],
             current_type=type_filter,
+            current_status=status,
             query=q,
             favorites_only=fav,
             last_updated=service.format_time(last) if last else "—",
@@ -87,6 +90,7 @@ def create_app(service: PokeTrackService) -> Flask:
                 request.args.get("q", "").strip(),
                 request.args.get("type", "").strip(),
                 request.args.get("fav") == "1",
+                request.args.get("status", "").strip(),
             )
         return Response(
             service.calendar_ics(events),
@@ -128,8 +132,9 @@ def create_app(service: PokeTrackService) -> Flask:
     def api_events():
         q = request.args.get("q", "").strip()
         type_filter = request.args.get("type", "").strip()
+        status = request.args.get("status", "").strip()
         fav = request.args.get("fav") == "1"
-        return jsonify([_view_model(e, service) for e in _filtered(q, type_filter, fav)])
+        return jsonify([_view_model(e, service) for e in _filtered(q, type_filter, fav, status)])
 
     # ------------------------------------------------------------------ #
     # Settings                                                           #
@@ -143,6 +148,7 @@ def create_app(service: PokeTrackService) -> Flask:
             webhook_url=cfg.get("webhook_url", ""),
             webhook_secret=cfg.get("webhook_secret", ""),
             interval=cfg.get("refresh_interval_minutes", 60),
+            remind_before=cfg.get("remind_before_minutes", 15),
             notifications=cfg.get("notifications", True),
             notify_favorites_only=cfg.get("notify_favorites_only", False),
             telegram_token=cfg.get("telegram_bot_token", ""),
@@ -164,6 +170,7 @@ def create_app(service: PokeTrackService) -> Flask:
         service.set_telegram(f.get("telegram_token", ""), f.get("telegram_chat", ""))
         service.set_time_format(f.get("time_format", "24h"))
         service.set_display_timezone(f.get("timezone", ""))
+        service.set_remind_before(f.get("remind_before_minutes", 15))
         if f.get("source") in ("leekduck", "blog"):
             service.config.set("source", f.get("source"))
         try:

@@ -31,6 +31,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "webhook_secret": "",        # optional: HMAC-SHA256 signing key for webhook POSTs
     "favorite_types": [],        # starred event types (for the Favorites filter)
     "notify_favorites_only": False,  # only alert for new events of favorited types
+    "remind_before_minutes": 15,     # remind this many minutes before an event starts (0 = off)
     "telegram_bot_token": "",    # optional: Telegram bot token for alerts
     "telegram_chat_id": "",      # optional: Telegram chat id for alerts
     "time_format": "24h",        # "24h" | "12h" — how event times are displayed

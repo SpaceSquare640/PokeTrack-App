@@ -27,6 +27,7 @@ function getState(): PokeTrackState {
     count: s?.count ?? 0,
     q: s?.q ?? "",
     type: s?.type ?? "",
+    status: s?.status ?? "",
     i18n: { ...DEFAULT_I18N, ...(s?.i18n ?? {}) },
   };
 }
@@ -57,7 +58,7 @@ function initRefreshButton(): void {
 function initPoller(state: PokeTrackState): void {
   const poll = async () => {
     try {
-      const events = await fetchEvents(state.q, state.type);
+      const events = await fetchEvents(state.q, state.type, state.status);
       if (events.length > state.count) {
         const toast = showToast(`↻ ${events.length - state.count} new — click to update`, true);
         if (toast) {

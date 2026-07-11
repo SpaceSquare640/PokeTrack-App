@@ -17,6 +17,7 @@ export interface PokeTrackState {
   count: number;
   q: string;
   type: string;
+  status: string;
   i18n: I18n;
 }
 

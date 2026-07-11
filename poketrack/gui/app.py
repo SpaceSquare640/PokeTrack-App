@@ -642,14 +642,25 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text_faint"], wraplength=520, justify="left",
         ).grid(row=6, column=0, sticky="w", padx=16, pady=(0, 12))
 
-        # Refresh interval
+        # Refresh interval + reminder lead time
         card = self._settings_card(scroll, 5, self.t("settings.refresh_interval"))
+        irow = ctk.CTkFrame(card, fg_color="transparent")
+        irow.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
         self.interval_entry = ctk.CTkEntry(
-            card, width=120, font=self.font_body, fg_color=C["surface_alt"],
+            irow, width=120, font=self.font_body, fg_color=C["surface_alt"],
             border_color=C["border"], text_color=C["text"],
         )
         self.interval_entry.insert(0, str(self.service.config.get("refresh_interval_minutes", 60)))
-        self.interval_entry.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
+        self.interval_entry.grid(row=0, column=0, sticky="w")
+        ctk.CTkLabel(
+            irow, text=self.t("settings.remind_before"), font=self.font_small, text_color=C["text_muted"],
+        ).grid(row=0, column=1, sticky="w", padx=(16, 6))
+        self.remind_entry = ctk.CTkEntry(
+            irow, width=70, font=self.font_body, fg_color=C["surface_alt"],
+            border_color=C["border"], text_color=C["text"],
+        )
+        self.remind_entry.insert(0, str(self.service.config.get("remind_before_minutes", 15)))
+        self.remind_entry.grid(row=0, column=2, sticky="w")
 
         # Configuration import / export
         card = self._settings_card(scroll, 6, self.t("settings.config"))
@@ -841,6 +852,7 @@ class PokeTrackApp(ctk.CTk):
         except (ValueError, TypeError):
             minutes = self.service.config.get("refresh_interval_minutes", 60)
         self.service.set_interval(minutes)
+        self.service.set_remind_before(self.remind_entry.get())
         self.saved_label.configure(text=self.t("settings.saved"))
 
     def _on_test_webhook(self) -> None:

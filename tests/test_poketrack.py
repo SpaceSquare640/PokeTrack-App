@@ -393,7 +393,7 @@ def test_notify_favorites_only_gating(service, monkeypatch):
     service.config.set("notify_favorites_only", True)
     service.toggle_favorite("community-day")
     sent = []
-    monkeypatch.setattr(service, "_send_webhook", lambda url, evs: sent.append([e.event_id for e in evs]))
+    monkeypatch.setattr(service, "_send_webhook", lambda url, evs, *a: sent.append([e.event_id for e in evs]))
     service.config.set("webhook_url", "https://example.com/hook")
     service.config.set("notifications", False)   # avoid plyer in test
 
@@ -493,6 +493,30 @@ def test_parser_native_matches_python(monkeypatch):
     python_events = src._parse_text(text)
 
     assert [_summ(e) for e in native_events] == [_summ(e) for e in python_events]
+
+
+def test_reminders_fire_once_within_window(service, monkeypatch):
+    """A reminder fires for an event starting inside the lead window, exactly once."""
+    now = datetime.now()
+    soon = make_event("soon", "Soon", start=now + timedelta(minutes=10), end=now + timedelta(hours=2))
+    later = make_event("later", "Later", start=now + timedelta(hours=5), end=now + timedelta(hours=6))
+    service.db.upsert_events([soon, later])
+    service.config.set("remind_before_minutes", 15)
+    service.config.set("notifications", False)  # avoid plyer in test
+
+    alerts = []
+    monkeypatch.setattr(service, "_send_alert", lambda evs, *a: alerts.append([e.event_id for e in evs]))
+
+    service._check_reminders()
+    assert alerts == [["soon"]]           # only the one inside the 15-min window
+    service._check_reminders()
+    assert alerts == [["soon"]]           # deduped — no second alert
+
+    # 0 disables reminders entirely.
+    service._reminded.clear()
+    service.config.set("remind_before_minutes", 0)
+    service._check_reminders()
+    assert alerts == [["soon"]]
 
 
 def test_event_from_native_normalises_datetimes():

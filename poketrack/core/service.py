@@ -76,6 +76,8 @@ class PokeTrackService:
         # Optional callback fired after every background refresh (used by the
         # desktop UI to re-render). Receives a RefreshResult.
         self.on_update: Optional[Callable[[RefreshResult], None]] = None
+        # Event IDs already reminded about, so a "starting soon" alert fires once.
+        self._reminded: set[str] = set()
 
     # ------------------------------------------------------------------ #
     # Lifecycle                                                          #
@@ -83,6 +85,9 @@ class PokeTrackService:
     def start(self, refresh_now: bool = True) -> None:
         """Start the background scheduler and (optionally) fetch immediately."""
         self._scheduler.start()
+        # Reminder check runs every minute (independent of the fetch interval, so a
+        # long refresh interval doesn't miss the "starts in X min" window).
+        self._scheduler.add_interval_job(self._check_reminders, minutes=1, job_id="poketrack_reminders")
         if refresh_now:
             threading.Thread(target=self._scheduled_refresh, daemon=True).start()
 
@@ -167,18 +172,49 @@ class PokeTrackService:
             relevant = [e for e in relevant if e.event_type in favs]
         if not relevant:
             return
+        self._send_alert(relevant, self.t("notify.new_title"), self.t("notify.new_body", n=len(relevant)))
+
+    def _check_reminders(self) -> None:
+        """Alert once for events starting within the ``remind_before_minutes`` window.
+
+        Runs every minute off the scheduler; reads only the local store. Honours
+        the region filter (via ``get_events``) and notify-favorites-only, same as
+        new-event alerts.
+        """
+        lead = int(self.config.get("remind_before_minutes", 0) or 0)
+        if lead <= 0:
+            return
+        now = datetime.now()
+        window_end = now + timedelta(minutes=lead)
+        due = [
+            e for e in self.get_events()
+            if e.event_id not in self._reminded and e.start and now <= e.start <= window_end
+        ]
+        if self.config.get("notify_favorites_only", False):
+            favs = set(self.favorite_types())
+            due = [e for e in due if e.event_type in favs]
+        if not due:
+            return
+        for e in due:
+            # ponytail: in-memory dedup — may re-remind once if restarted mid-window;
+            # persist the ID set if that ever matters.
+            self._reminded.add(e.event_id)
+        self._send_alert(due, self.t("notify.reminder_title"), self.t("notify.reminder_body", n=len(due)))
+
+    def _send_alert(self, events: list[Event], title: str, body: str) -> None:
+        """Fan an alert out to the enabled channels (desktop, webhook, Telegram)."""
         if self.config.get("notifications", True):
-            notify(self.t("notify.new_title"), self.t("notify.new_body", n=len(relevant)))
+            notify(title, body)
         url = (self.config.get("webhook_url", "") or "").strip()
         if url:
-            # Off-thread so a slow webhook never blocks the refresh.
-            threading.Thread(target=self._send_webhook, args=(url, relevant), daemon=True).start()
+            # Off-thread so a slow webhook never blocks the caller.
+            threading.Thread(target=self._send_webhook, args=(url, events, title, body), daemon=True).start()
         if (self.config.get("telegram_bot_token", "") or "").strip() and \
                 (self.config.get("telegram_chat_id", "") or "").strip():
-            threading.Thread(target=self._send_telegram, args=(relevant,), daemon=True).start()
+            threading.Thread(target=self._send_telegram, args=(events, body), daemon=True).start()
 
-    def _send_telegram(self, events: list[Event]) -> tuple[bool, str]:
-        lines = [self.t("notify.new_body", n=len(events))]
+    def _send_telegram(self, events: list[Event], body: str) -> tuple[bool, str]:
+        lines = [body]
         for e in events[:10]:
             line = f"• {e.name}"
             if e.link:
@@ -190,12 +226,9 @@ class PokeTrackService:
             "\n".join(lines),
         )
 
-    def _send_webhook(self, url: str, events: list[Event]) -> tuple[bool, str]:
+    def _send_webhook(self, url: str, events: list[Event], title: str, body: str) -> tuple[bool, str]:
         payload = [self._webhook_event(e) for e in events]
-        return webhook.send(
-            url, self.t("notify.new_title"), self.t("notify.new_body", n=len(events)),
-            payload, secret=self._webhook_secret(),
-        )
+        return webhook.send(url, title, body, payload, secret=self._webhook_secret())
 
     def _webhook_secret(self) -> Optional[str]:
         return (self.config.get("webhook_secret", "") or "").strip() or None
@@ -408,6 +441,12 @@ class PokeTrackService:
 
     def set_notify_favorites_only(self, enabled: bool) -> None:
         self.config.set("notify_favorites_only", bool(enabled))
+
+    def set_remind_before(self, minutes) -> None:
+        try:
+            self.config.set("remind_before_minutes", max(0, int(minutes)))
+        except (TypeError, ValueError):
+            pass
 
     def set_telegram(self, token: str, chat_id: str) -> None:
         self.config.set("telegram_bot_token", (token or "").strip(), save=False)

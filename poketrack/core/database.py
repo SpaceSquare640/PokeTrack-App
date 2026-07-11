@@ -46,6 +46,10 @@ CREATE INDEX IF NOT EXISTS idx_events_name   ON events(name);
 # existing databases upgrade in place without losing data.
 _MIGRATIONS = {
     "extra": "ALTER TABLE events ADD COLUMN extra TEXT",
+    # Reminder bookkeeping — deliberately NOT in upsert_events' column list, so
+    # re-fetching an event never resets whether it's already been reminded about.
+    "reminded_start": "ALTER TABLE events ADD COLUMN reminded_start INTEGER DEFAULT 0",
+    "reminded_end": "ALTER TABLE events ADD COLUMN reminded_end INTEGER DEFAULT 0",
 }
 
 

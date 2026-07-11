@@ -40,6 +40,22 @@ class UpdateScheduler:
         self._scheduler.start()
         logger.info("Scheduler started (every %d min)", self._interval)
 
+    def add_interval_job(self, func: Callable[[], None], minutes: int, job_id: str) -> None:
+        """Register an auxiliary recurring job (e.g. the reminder check).
+
+        Wrapped so a failure can't kill the scheduler thread, same as the main job.
+        """
+        def safe() -> None:
+            try:
+                func()
+            except Exception:  # noqa: BLE001 - keep the scheduler thread alive
+                logger.exception("Job %s failed", job_id)
+
+        self._scheduler.add_job(
+            safe, trigger="interval", minutes=max(1, int(minutes)),
+            id=job_id, replace_existing=True, max_instances=1, coalesce=True,
+        )
+
     def reschedule(self, interval_minutes: int) -> None:
         self._interval = max(1, int(interval_minutes))
         if self._scheduler.running:

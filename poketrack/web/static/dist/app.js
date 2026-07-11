@@ -3,13 +3,13 @@ async function p() {
   if (!t.ok) throw new Error(`refresh failed: ${t.status}`);
   return await t.json();
 }
-async function h(t, e) {
-  const n = new URLSearchParams();
-  t && n.set("q", t), e && n.set("type", e);
-  const o = n.toString(), r = await fetch("/api/events" + (o ? "?" + o : ""));
-  if (!r.ok) throw new Error(`events failed: ${r.status}`);
-  const a = await r.json();
-  return Array.isArray(a) ? a : [];
+async function h(t, e, n = "") {
+  const o = new URLSearchParams();
+  t && o.set("q", t), e && o.set("type", e), n && o.set("status", n);
+  const r = o.toString(), a = await fetch("/api/events" + (r ? "?" + r : ""));
+  if (!a.ok) throw new Error(`events failed: ${a.status}`);
+  const s = await a.json();
+  return Array.isArray(s) ? s : [];
 }
 async function v(t) {
   const e = await fetch("/api/favorite", {
@@ -118,6 +118,7 @@ function k() {
     count: t?.count ?? 0,
     q: t?.q ?? "",
     type: t?.type ?? "",
+    status: t?.status ?? "",
     i18n: { ...C, ...t?.i18n ?? {} }
   };
 }
@@ -138,7 +139,7 @@ function L() {
 function T(t) {
   const e = async () => {
     try {
-      const n = await h(t.q, t.type);
+      const n = await h(t.q, t.type, t.status);
       if (n.length > t.count) {
         const o = l(`↻ ${n.length - t.count} new — click to update`, !0);
         o && (o.style.cursor = "pointer", o.onclick = () => window.location.reload());
