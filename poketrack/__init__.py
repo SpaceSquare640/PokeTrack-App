@@ -10,4 +10,4 @@ The package is split into three layers that never reach across the wrong way:
 Both front-ends talk only to ``core.service.PokeTrackService``.
 """
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"

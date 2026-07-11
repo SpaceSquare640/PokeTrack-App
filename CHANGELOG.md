@@ -3,6 +3,29 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-07-11 — Reminders, history, PWA, shiny bosses
+
+### Added
+- **Event reminders** — a desktop/webhook/Telegram alert fires once, N minutes
+  before an event starts (`remind_before_minutes`, default 15, `0` = off).
+  Configurable in both the web and desktop Settings. Runs off a 1-minute
+  scheduler check independent of the fetch interval; honours the region filter
+  and notify-favorites-only.
+- **Past-events / status filter** — the web dashboard gains an
+  All / Live / Upcoming / Ended filter (surfacing the store's existing
+  status-aware queries), threaded through the page, `/api/events`, and
+  `/calendar.ics`.
+- **Progressive Web App** — the web app is now installable and works offline: a
+  `manifest.webmanifest` (reusing the icon set) and a network-first service
+  worker that caches the app shell + last-seen data. Running still needs no
+  Node; it's a progressive enhancement.
+- **Shiny raid bosses** — bosses that can be shiny are marked with ✨ (from the
+  feed's `canBeShiny`), in both the Python and Rust parsers.
+
+### Notes
+- No breaking changes. 31 tests pass. Shareable filter links already work via
+  the URL's query parameters (search/type/status/favorites).
+
 ## [1.4.1] — 2026-07-11 — Icon update
 
 ### Added
@@ -72,6 +95,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.5.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.0
 [1.4.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.1
 [1.4.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.0
 [1.3.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.3.0
