@@ -105,14 +105,21 @@
 
   <!-- ──────────────── Event grid ──────────────── -->
   {% if events %}
+    <div data-empty-hint style="display:none"
+         class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-xl">
+      {{ t('events.empty') }}
+    </div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {% for event in events %}
-        <div class="relative group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
+        <div data-event-card
+             data-search="{{ (event.name ~ ' ' ~ (event.description or '') ~ ' ' ~ (event.type_label or ''))|lower }}"
+             class="relative group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
                     flex flex-col hover:border-midnight-primary hover:-translate-y-0.5 transition-all">
           <!-- Favorite toggle (kept outside the card link) -->
-          <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10">
+          <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10"
+                data-fav-form data-fav-type="{{ event.event_type }}">
             <input type="hidden" name="type" value="{{ event.event_type }}">
-            <button type="submit" title="{{ t('events.favorite') }}"
+            <button type="submit" title="{{ t('events.favorite') }}" data-star
                     class="w-8 h-8 rounded-full bg-midnight-bg/70 backdrop-blur flex items-center justify-center
                            {% if event.favorite %}text-midnight-warning{% else %}text-midnight-faint hover:text-midnight-text{% endif %}">
               {% if event.favorite %}★{% else %}☆{% endif %}
@@ -132,9 +139,8 @@
                   <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
                         style="color: {{ event.status_color }};">{{ event.badge }}</span>
                 {% endif %}
-                {% if event.countdown %}
-                  <span class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
-                {% endif %}
+                <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
+                      class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
                 {% if event.type_label %}
                   <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
                 {% endif %}
@@ -168,7 +174,21 @@
             rounded-lg px-4 py-2 shadow-lg transition-all duration-300"></div>
 
 <script>
-  // State the auto-refresh poller uses to detect newly-added events.
-  window.POKETRACK = { count: {{ events|length }}, q: {{ query|tojson }}, type: {{ current_type|tojson }} };
+  // Bootstrap state for the TS front-end: poll baseline + raw i18n templates
+  // (placeholders intact) so live countdowns are localized without a round-trip.
+  window.POKETRACK = {
+    count: {{ events|length }},
+    q: {{ query|tojson }},
+    type: {{ current_type|tojson }},
+    i18n: {
+      starts_in: {{ t('events.starts_in')|tojson }},
+      ends_in:   {{ t('events.ends_in')|tojson }},
+      ended:     {{ t('events.ended')|tojson }},
+      day:       {{ t('time.day')|tojson }},
+      hour:      {{ t('time.hour')|tojson }},
+      minute:    {{ t('time.minute')|tojson }},
+      now:       {{ t('time.now')|tojson }}
+    }
+  };
 </script>
 {% endblock %}

@@ -7,6 +7,8 @@ on:
     branches: [main]
 
 jobs:
+  # Pure-Python matrix — proves the app (and its graceful fallback) works with
+  # NO Rust toolchain installed. The native parity test self-skips here.
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -28,5 +30,54 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run tests
+      - name: Run tests (pure Python)
         run: python -m pytest -q
+
+  # Native job — builds the Rust extension, installs it, and runs the suite so
+  # the native fast path + the native/Python parity test are exercised in CI.
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build + install the native extension
+        run: |
+          python -m pip install --upgrade pip maturin
+          pip install ./poketrack-native
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests (with native fast path)
+        run: python -m pytest -q
+
+  # Front-end job — type-check and build the TypeScript bundle so a TS error or
+  # broken build fails CI. The compiled bundle is committed; this guards it.
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web-frontend/package-lock.json
+
+      - name: Install + type-check + build
+        working-directory: web-frontend
+        run: |
+          npm ci
+          npm run build

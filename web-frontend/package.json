@@ -1,0 +1,16 @@
+{
+  "name": "poketrack-web-frontend",
+  "private": true,
+  "version": "1.4.0",
+  "type": "module",
+  "description": "TypeScript interactive layer for the PokéTrack web UI (built with Vite).",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^6.0.7"
+  }
+}

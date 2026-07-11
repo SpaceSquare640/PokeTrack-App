@@ -17,6 +17,19 @@ data/*
 # Ship config.example.json instead; the app auto-creates config.json on first run.
 config.json
 
+# Rust native extension build artifacts (source under poketrack-native/ is kept;
+# Cargo.lock IS tracked for reproducible release builds).
+poketrack-native/target/
+target/
+*.whl
+
+# Node / TypeScript front-end (web-frontend/). The COMPILED bundle in
+# poketrack/web/static/dist/ IS committed so running the app needs no Node;
+# only rebuilding does.
+node_modules/
+web-frontend/node_modules/
+.vite/
+
 # IDE
 .vscode/
 .idea/

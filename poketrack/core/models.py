@@ -117,6 +117,31 @@ class Event:
             has_research=hl["has_research"],
         )
 
+    @classmethod
+    def from_native(cls, rec: dict[str, Any]) -> "Event":
+        """Build an Event from a record produced by the Rust fast path.
+
+        The native ``parse_feed`` already extracts fields, distils highlights and
+        infers the region; it returns ``start``/``end`` as the *raw* source
+        strings, so we run them through :func:`_parse_dt` here to keep the exact
+        same timezone-normalising behaviour as the pure-Python path.
+        """
+        return cls(
+            event_id=str(rec.get("event_id") or rec.get("name") or "Untitled event"),
+            name=rec.get("name") or "Untitled event",
+            event_type=rec.get("event_type", "") or "",
+            heading=rec.get("heading", "") or "",
+            link=rec.get("link", "") or "",
+            image=rec.get("image", "") or "",
+            start=_parse_dt(rec.get("start")),
+            end=_parse_dt(rec.get("end")),
+            region=rec.get("region") or GLOBAL,
+            bosses=list(rec.get("bosses") or []),
+            promocodes=list(rec.get("promocodes") or []),
+            has_spawns=bool(rec.get("has_spawns")),
+            has_research=bool(rec.get("has_research")),
+        )
+
     # ------------------------------------------------------------------ #
     # Status logic                                                       #
     # ------------------------------------------------------------------ #

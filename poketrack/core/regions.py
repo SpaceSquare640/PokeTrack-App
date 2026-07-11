@@ -76,10 +76,16 @@ def reload() -> None:
     _load()
 
 
+def keyword_pairs() -> list[tuple[str, str]]:
+    """The current ``(keyword, region)`` rules — passed to the native fast path."""
+    return list(_KEYWORDS)
+
+
 def classify(*texts: str) -> str:
     """Infer a region from one or more text fields (name, heading, …).
 
     Returns the first matching region, or :data:`GLOBAL` when nothing matches.
+    Uses the Rust fast path when available, falling back to pure Python.
     """
     haystack = " ".join(t for t in texts if t).lower()
     for keyword, region in _KEYWORDS:

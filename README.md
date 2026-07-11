@@ -35,6 +35,7 @@ consistent *Midnight Blue* dark theme.
 | **Notifications** | Desktop + in-app alerts, **webhooks** (Discord/Slack/custom, optionally **HMAC-signed**), and **Telegram** — when *new* events appear in your regions. |
 | **Config import/export** | Back up or move your settings from either UI. |
 | **Async + responsive** | `async`/`await` (httpx) fetches off the GUI thread, with a skeleton loading screen. |
+| **Native fast path** | Optional **Rust** extension (PyO3) parses the feed + classifies regions in native code, with automatic pure-Python fallback when it isn't installed. |
 | **Persistence** | **SQLite** (indexed) caches events for offline viewing; old events auto-pruned. |
 | **Background updates** | **APScheduler** on a configurable interval; the web view auto-detects new events. |
 | **Distribution** | **CI** (pytest matrix), a **Dockerfile** for the web app, and a one-file **Windows .exe** built on release. |
@@ -66,6 +67,7 @@ PokéTrack App/
     │   ├── database.py  # SQLite persistence (thread-safe, WAL, pruning, migrations)
     │   ├── http.py      # shared requests.Session with retries/backoff
     │   ├── parser.py    # LeekDuck (JSON) + Blog (HTML) sources
+    │   ├── native.py    # loader for the optional Rust fast path (guarded)
     │   ├── notify.py    # optional desktop notifications (guarded)
     │   ├── webhook.py   # outgoing webhooks (Discord/Slack/generic)
     │   ├── scheduler.py # APScheduler wrapper
@@ -78,7 +80,26 @@ PokéTrack App/
         ├── server.py    # Flask app + JSON API
         ├── templates/   # base.html (Tailwind config injected) + index.html
         └── static/      # css/style.css, js/app.js
+
+poketrack-native/        # optional Rust extension (PyO3) — feed parse + region classify
+├── Cargo.toml
+├── pyproject.toml       # maturin build backend
+├── src/lib.rs
+└── benchmark.py         # native vs pure-Python benchmark
+
+web-frontend/            # TypeScript interactive layer for the web UI (Vite build)
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+└── src/                 # main.ts, api.ts, countdown.ts, search.ts, favorites.ts …
+                         # → compiles to poketrack/web/static/dist/app.js (committed)
 ```
+
+> **Polyglot by design.** Python orchestrates and renders; an optional **Rust**
+> extension accelerates the data path; the web front-end is **TypeScript**. The
+> Rust and TypeScript layers each degrade/rebuild independently, and the app runs
+> from a plain checkout with **neither a Rust nor a Node toolchain** — those are
+> only needed to *rebuild* the compiled artifacts, which are committed.
 
 ### Architecture at a glance
 
@@ -161,6 +182,47 @@ pyinstaller --noconfirm PokeTrack.spec  # -> dist/PokeTrack.exe
 ```
 On GitHub, publishing a Release triggers `.github/workflows/release.yml`, which
 builds `PokeTrack.exe` and attaches it to that release automatically.
+
+### Native fast path (Rust, optional)
+
+PokéTrack has an optional **Rust** extension (`poketrack-native/`, built with
+[PyO3](https://pyo3.rs) + [maturin](https://www.maturin.rs)) that parses the
+ScrapedDuck feed and classifies regions in native code. It is **not required** —
+`poketrack/core/native.py` imports it if present and transparently falls back to
+the pure-Python path if not, so the app (and the whole test suite) behaves
+identically either way.
+
+```bash
+pip install maturin
+pip install ./poketrack-native        # compile + install the extension
+python poketrack-native/benchmark.py  # compare against the pure-Python path
+```
+
+The build produces an **abi3** wheel (`cp39-abi3`), so a single wheel works on
+any CPython ≥ 3.9 — no rebuild per interpreter. Measured on the live feed, the
+native JSON→structured-data step is ~3–5× faster; end-to-end the gain is smaller
+because building Python `Event` objects (unavoidable Python work) dominates —
+the benchmark reports both numbers honestly. Region classification and datetime
+normalisation keep identical semantics to the Python path (verified by a
+parity test in `tests/`).
+
+### Web front-end (TypeScript, `web-frontend/`)
+
+The web UI's interactive layer is **TypeScript**, bundled by
+[Vite](https://vite.dev) into `poketrack/web/static/dist/app.js`. It progressively
+enhances the Flask server-rendered page — the page works with JavaScript
+disabled; the bundle adds live-ticking countdowns, instant client-side search,
+no-reload favorite toggling, and the async refresh/poller.
+
+```bash
+cd web-frontend
+npm install
+npm run build     # type-check + emit the committed bundle
+npm run dev       # optional: Vite dev server
+```
+
+The compiled bundle is committed, so **running the app needs no Node** — only
+rebuilding does. CI type-checks and builds it on every push.
 
 ---
 

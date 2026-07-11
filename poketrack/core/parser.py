@@ -22,12 +22,14 @@ layer maps to friendly, localized messages.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import Any, Protocol, runtime_checkable
 
 import httpx
 import requests
 
+from . import native, regions
 from .http import DEFAULT_TIMEOUT, SESSION, USER_AGENT
 from .models import Event
 
@@ -94,7 +96,31 @@ class LeekDuckSource:
         self.url = url
         self.timeout = timeout
 
-    # --- shared parse routine (used by both sync and async fetch) ------- #
+    # --- shared parse routines (used by both sync and async fetch) ------ #
+    def _parse_text(self, text: str) -> list[Event]:
+        """Parse raw feed JSON text: Rust fast path if present, else pure Python.
+
+        The native path parses + classifies in one call; any native hiccup falls
+        back to the pure-Python loop, so behaviour is identical either way.
+        """
+        if native.AVAILABLE:
+            try:
+                records = native.parse_feed(text, regions.keyword_pairs())
+                events = [Event.from_native(r) for r in records]
+                if not events:
+                    raise ParseError("No events could be parsed from the source")
+                logger.info("Fetched %d events from '%s' (native)", len(events), self.name)
+                return events
+            except ParseError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - native error => pure-Python fallback
+                logger.warning("Native parse failed (%s); falling back to Python", exc)
+        try:
+            data = json.loads(text)
+        except ValueError as exc:
+            raise ParseError("Response was not valid JSON") from exc
+        return self._parse_feed(data)
+
     def _parse_feed(self, data: Any) -> list[Event]:
         if not isinstance(data, list):
             raise ParseError("Unexpected JSON structure (expected a list of events)")
@@ -118,11 +144,7 @@ class LeekDuckSource:
             raise FetchError(f"Timed out reaching {self.url}") from exc
         except requests.RequestException as exc:
             raise FetchError(str(exc)) from exc
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise ParseError("Response was not valid JSON") from exc
-        return self._parse_feed(data)
+        return self._parse_text(resp.text)
 
     async def fetch_async(self) -> list[Event]:
         resp = await _aget(self.url, self.timeout)
@@ -130,11 +152,7 @@ class LeekDuckSource:
             resp.raise_for_status()
         except httpx.HTTPStatusError as exc:
             raise FetchError(str(exc)) from exc
-        try:
-            data = resp.json()
-        except ValueError as exc:
-            raise ParseError("Response was not valid JSON") from exc
-        return self._parse_feed(data)
+        return self._parse_text(resp.text)
 
 
 class PokemonGoBlogSource:

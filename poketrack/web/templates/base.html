@@ -52,6 +52,7 @@
 </head>
 <body class="bg-midnight-bg text-midnight-text font-sans min-h-screen antialiased">
   {% block content %}{% endblock %}
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <!-- TypeScript front-end, compiled by Vite (web-frontend/) to a stable path. -->
+  <script type="module" src="{{ url_for('static', filename='dist/app.js') }}"></script>
 </body>
 </html>

@@ -427,3 +427,82 @@ def test_telegram_not_configured_is_safe():
     from poketrack.core import telegram
     ok, detail = telegram.send("", "", "hello")
     assert ok is False and detail == "not configured"
+
+
+# --------------------------------------------------------------------------- #
+# Native fast path (Rust) — parity with pure Python + graceful fallback       #
+# --------------------------------------------------------------------------- #
+import json as _json  # noqa: E402
+
+from poketrack.core import native  # noqa: E402
+from poketrack.core.parser import LeekDuckSource  # noqa: E402
+
+# A feed exercising: raid bosses, a regional (Asia) event, promo codes, a
+# missing start/end, and tz-aware datetimes that must normalise to naive local.
+_SAMPLE_FEED = [
+    {
+        "eventID": "raid-1", "name": "Mega Lucario Raids", "eventType": "raid-battles",
+        "heading": "Raid Battles", "link": "https://x/raid-1", "image": "https://img/1",
+        "start": "2099-07-13T06:00:00.000", "end": "2099-07-14T22:00:00.000",
+        "extraData": {
+            "raidbattles": {"bosses": [{"name": "Mega Lucario"}]},
+            "generic": {"hasSpawns": False, "hasFieldResearchTasks": True},
+        },
+    },
+    {
+        "eventID": "safari-2", "name": "Taipei City Safari", "eventType": "safari-zone",
+        "heading": "Safari Zone", "link": "https://x/safari-2", "image": "",
+        "start": None, "end": None,
+        "extraData": {"promocodes": ["ABC123"]},
+    },
+    {
+        "eventID": "tz-3", "name": "Global Event", "eventType": "event",
+        "heading": "", "link": "https://x/tz-3", "image": "",
+        "start": "2099-01-01T00:00:00+09:00", "end": "2099-01-02T00:00:00Z",
+    },
+]
+
+
+def _summ(e: Event) -> tuple:
+    """Field tuple for comparing two Events for exact equality."""
+    return (e.event_id, e.name, e.event_type, e.heading, e.link, e.image,
+            e.start, e.end, e.region, tuple(e.bosses), tuple(e.promocodes),
+            e.has_spawns, e.has_research)
+
+
+def test_parser_pure_python_path(monkeypatch):
+    """The pure-Python fallback parses the feed correctly (no native needed)."""
+    monkeypatch.setattr(native, "AVAILABLE", False)
+    events = LeekDuckSource()._parse_text(_json.dumps(_SAMPLE_FEED))
+    assert [e.event_id for e in events] == ["raid-1", "safari-2", "tz-3"]
+    assert events[0].bosses == ["Mega Lucario"] and events[0].has_research
+    assert events[1].region == "Asia" and events[1].promocodes == ["ABC123"]
+    # tz-aware inputs are collapsed to naive local wall-clock time.
+    assert events[2].start is not None and events[2].start.tzinfo is None
+
+
+@pytest.mark.skipif(not native.AVAILABLE, reason="Rust extension not installed")
+def test_parser_native_matches_python(monkeypatch):
+    """Native and pure-Python paths produce identical Events for the same feed."""
+    text = _json.dumps(_SAMPLE_FEED)
+    src = LeekDuckSource()
+
+    monkeypatch.setattr(native, "AVAILABLE", True)
+    native_events = src._parse_text(text)
+    monkeypatch.setattr(native, "AVAILABLE", False)
+    python_events = src._parse_text(text)
+
+    assert [_summ(e) for e in native_events] == [_summ(e) for e in python_events]
+
+
+def test_event_from_native_normalises_datetimes():
+    """Event.from_native runs start/end through _parse_dt (tz -> naive local)."""
+    rec = {
+        "event_id": "z", "name": "Z", "event_type": "event", "heading": "",
+        "link": "", "image": "", "region": "Global",
+        "start": "2099-01-01T00:00:00+09:00", "end": None,
+        "bosses": ["A"], "promocodes": [], "has_spawns": True, "has_research": False,
+    }
+    e = Event.from_native(rec)
+    assert e.start is not None and e.start.tzinfo is None
+    assert e.bosses == ["A"] and e.has_spawns and e.end is None

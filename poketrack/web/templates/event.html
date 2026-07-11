@@ -23,9 +23,8 @@
           <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
                 style="color: {{ event.status_color }};">{{ event.badge }}</span>
         {% endif %}
-        {% if event.countdown %}
-          <span class="text-xs font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
-        {% endif %}
+        <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
+              class="text-xs font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
         {% if event.type_label %}
           <span class="text-xs text-midnight-faint">{{ event.type_label }}</span>
         {% endif %}
@@ -71,12 +70,13 @@
            class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm rounded-lg px-4 py-2 border border-midnight-border transition-colors">
           📅 {{ t('events.add_to_calendar') }}
         </a>
-        <form action="{{ url_for('favorite') }}" method="post">
+        <form action="{{ url_for('favorite') }}" method="post"
+              data-fav-form data-fav-type="{{ event.event_type }}">
           <input type="hidden" name="type" value="{{ event.event_type }}">
           <button type="submit"
                   class="text-sm rounded-lg px-4 py-2 border transition-colors
                          {% if event.favorite %}border-midnight-warning text-midnight-warning{% else %}border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt{% endif %}">
-            {% if event.favorite %}★{% else %}☆{% endif %} {{ t('events.favorite') }}
+            <span data-star>{% if event.favorite %}★{% else %}☆{% endif %}</span> {{ t('events.favorite') }}
           </button>
         </form>
       </div>

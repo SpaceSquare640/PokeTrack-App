@@ -99,6 +99,13 @@ def create_app(service: PokeTrackService) -> Flask:
         service.toggle_favorite(request.form.get("type", "").strip())
         return redirect(request.referrer or url_for("index"))
 
+    @app.post("/api/favorite")
+    def api_favorite():
+        """JSON favorite toggle (used by the TS front-end; no page reload)."""
+        etype = request.form.get("type", "").strip()
+        fav = service.toggle_favorite(etype) if etype else False
+        return jsonify({"type": etype, "favorite": fav})
+
     @app.post("/set-language")
     def set_language():
         service.set_language(request.form.get("language", "en"))

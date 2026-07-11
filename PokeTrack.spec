@@ -21,7 +21,9 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=datas,
-    hiddenimports=["PIL._tkinter_finder"],
+    # poketrack_native is imported inside a try/except (optional Rust fast path);
+    # list it explicitly so PyInstaller bundles it when it's installed at build time.
+    hiddenimports=["PIL._tkinter_finder", "poketrack_native"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

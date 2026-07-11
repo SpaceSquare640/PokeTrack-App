@@ -1,0 +1,22 @@
+[package]
+name = "poketrack-native"
+version = "0.1.0"
+edition = "2021"
+description = "Native (Rust) fast path for PokéTrack: feed parsing + region classification."
+license = "MIT"
+
+[lib]
+# The compiled module Python imports as `poketrack_native`.
+name = "poketrack_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+# abi3-py39: one wheel works on any CPython >= 3.9 (incl. 3.13 and 3.14),
+# so we don't rebuild per interpreter — solves the dual-Python setup.
+pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
