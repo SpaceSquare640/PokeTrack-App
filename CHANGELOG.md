@@ -3,6 +3,25 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-07-12 — Update check & community links
+
+### Added
+- **Automatic update check** — a best-effort GitHub-releases check runs at
+  startup and every 6 hours (`poketrack/core/updates.py`, reusing the shared
+  retrying HTTP session; fail-silent). When a newer release exists, the desktop
+  shows a clickable footer badge and the web shows a top banner, both opening
+  the release page. Nothing shows when up to date.
+- **Footer with community links** — a persistent bottom bar in both UIs with
+  links to the maintainer's GitHub profile and Discord community (icons
+  bundled for the desktop `.exe`, served static for the web) plus a credit line.
+
+### i18n
+- New `update.available` + `footer.*` strings across all 5 languages.
+
+### Notes
+- 31 tests pass. Update logic verified against the live GitHub API; the desktop
+  UI (footer + badge) verified via headless construction.
+
 ## [1.5.1] — 2026-07-11 — Accessibility & polish pass
 
 Applied third-party UI skills (ibelick's baseline-ui/fixing-accessibility/
@@ -132,6 +151,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.6.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.6.0
 [1.5.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.1
 [1.5.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.0
 [1.4.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.4.1
