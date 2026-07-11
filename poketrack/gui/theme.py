@@ -23,7 +23,7 @@ MIDNIGHT_BLUE: dict[str, str] = {
     "accent":        "#38BDF8",  # sky accent
     "text":          "#E2E8F0",  # primary text — slate-200
     "text_muted":    "#94A3B8",  # secondary text — slate-400
-    "text_faint":    "#64748B",  # tertiary text — slate-500
+    "text_faint":    "#8091A8",  # tertiary text — lightened to clear WCAG AA (4.5:1+) on dark surfaces
     "success":       "#34D399",  # active / live
     "warning":       "#FBBF24",  # upcoming / soon
     "danger":        "#F87171",  # error / ended
