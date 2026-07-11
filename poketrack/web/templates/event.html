@@ -73,10 +73,10 @@
         <form action="{{ url_for('favorite') }}" method="post"
               data-fav-form data-fav-type="{{ event.event_type }}">
           <input type="hidden" name="type" value="{{ event.event_type }}">
-          <button type="submit"
+          <button type="submit" aria-pressed="{{ 'true' if event.favorite else 'false' }}"
                   class="text-sm rounded-lg px-4 py-2 border transition-colors
                          {% if event.favorite %}border-midnight-warning text-midnight-warning{% else %}border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt{% endif %}">
-            <span data-star>{% if event.favorite %}★{% else %}☆{% endif %}</span> {{ t('events.favorite') }}
+            <span data-star aria-hidden="true">{% if event.favorite %}★{% else %}☆{% endif %}</span> {{ t('events.favorite') }}
           </button>
         </form>
       </div>

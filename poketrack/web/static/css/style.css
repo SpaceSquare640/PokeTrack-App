@@ -47,3 +47,17 @@ body {
 article.group:hover {
   box-shadow: 0 6px 24px -10px rgba(0, 0, 0, 0.6);
 }
+
+/* Respect users who prefer reduced motion: neutralise transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

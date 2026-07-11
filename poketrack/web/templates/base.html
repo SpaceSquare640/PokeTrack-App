@@ -4,6 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ t('app.title') }} — {{ t('app.subtitle') }}</title>
+  <meta name="description" content="{{ t('app.subtitle') }}">
+  <meta property="og:title" content="{{ t('app.title') }}">
+  <meta property="og:description" content="{{ t('app.subtitle') }}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
 
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <meta name="theme-color" content="{{ palette.bg }}">
@@ -57,7 +62,7 @@
   </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-midnight-bg text-midnight-text font-sans min-h-screen antialiased">
+<body class="bg-midnight-bg text-midnight-text font-sans min-h-dvh antialiased">
   {% block content %}{% endblock %}
   <!-- TypeScript front-end, compiled by Vite (web-frontend/) to a stable path. -->
   <script type="module" src="{{ url_for('static', filename='dist/app.js') }}"></script>

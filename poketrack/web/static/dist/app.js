@@ -6,10 +6,10 @@ async function p() {
 async function h(t, e, n = "") {
   const o = new URLSearchParams();
   t && o.set("q", t), e && o.set("type", e), n && o.set("status", n);
-  const r = o.toString(), a = await fetch("/api/events" + (r ? "?" + r : ""));
-  if (!a.ok) throw new Error(`events failed: ${a.status}`);
-  const s = await a.json();
-  return Array.isArray(s) ? s : [];
+  const r = o.toString(), s = await fetch("/api/events" + (r ? "?" + r : ""));
+  if (!s.ok) throw new Error(`events failed: ${s.status}`);
+  const a = await s.json();
+  return Array.isArray(a) ? a : [];
 }
 async function v(t) {
   const e = await fetch("/api/favorite", {
@@ -30,8 +30,8 @@ function m(t, e) {
   if (o >= 1) return t.day.replace("{n}", String(o));
   const r = Math.floor(n / 3600);
   if (r >= 1) return t.hour.replace("{n}", String(r));
-  const a = Math.floor(n % 3600 / 60);
-  return a >= 1 ? t.minute.replace("{n}", String(a)) : t.now;
+  const s = Math.floor(n % 3600 / 60);
+  return s >= 1 ? t.minute.replace("{n}", String(s)) : t.now;
 }
 function g(t, e, n) {
   return e !== null && t < e ? "upcoming" : n !== null && t > n ? "ended" : e !== null && e <= t && (n === null || t <= n) ? "active" : "unknown";
@@ -42,9 +42,9 @@ function y(t) {
   return Number.isNaN(e) ? null : e;
 }
 function S(t, e, n) {
-  const o = y(t.dataset.start ?? null), r = y(t.dataset.end ?? null), a = g(n, o, r);
-  let s = "";
-  a === "upcoming" && o !== null ? s = e.starts_in.replace("{time}", m(e, o - n)) : a === "active" && r !== null ? s = e.ends_in.replace("{time}", m(e, r - n)) : a === "ended" && (s = e.ended), t.textContent = s;
+  const o = y(t.dataset.start ?? null), r = y(t.dataset.end ?? null), s = g(n, o, r);
+  let a = "";
+  s === "upcoming" && o !== null ? a = e.starts_in.replace("{time}", m(e, o - n)) : s === "active" && r !== null ? a = e.ends_in.replace("{time}", m(e, r - n)) : s === "ended" && (a = e.ended), t.textContent = a;
 }
 function E(t) {
   const e = Array.from(document.querySelectorAll("[data-countdown]"));
@@ -55,17 +55,17 @@ function E(t) {
   };
   n(), window.setInterval(n, 1e3);
 }
-function k() {
+function b() {
   const t = document.querySelector('input[name="q"]');
   if (!t) return;
   const e = Array.from(document.querySelectorAll("[data-event-card]"));
   if (e.length === 0) return;
   const n = Array.from(document.querySelectorAll("[data-event-section]")), o = document.querySelector("[data-empty-hint]"), r = () => {
-    const a = t.value.trim().toLowerCase();
-    let s = 0;
+    const s = t.value.trim().toLowerCase();
+    let a = 0;
     for (const i of e) {
-      const u = i.dataset.search ?? "", c = a === "" || u.includes(a);
-      i.style.display = c ? "" : "none", c && (s += 1);
+      const u = i.dataset.search ?? "", c = s === "" || u.includes(s);
+      i.style.display = c ? "" : "none", c && (a += 1);
     }
     for (const i of n) {
       const u = i.dataset.eventSection, c = e.some(
@@ -73,15 +73,15 @@ function k() {
       );
       i.style.display = c ? "" : "none";
     }
-    o && (o.style.display = s === 0 ? "" : "none");
+    o && (o.style.display = a === 0 ? "" : "none");
   };
   t.addEventListener("input", r);
 }
-function q(t, e) {
+function k(t, e) {
   document.querySelectorAll(
     `[data-fav-form][data-fav-type="${CSS.escape(t)}"] [data-star]`
   ).forEach((o) => {
-    o.textContent = e ? "★" : "☆", o.style.color = e ? "var(--mn-warning)" : "var(--mn-text-faint)";
+    o.textContent = e ? "★" : "☆", o.style.color = e ? "var(--mn-warning)" : "var(--mn-text-faint)", o.closest("button")?.setAttribute("aria-pressed", String(e));
   });
 }
 function A() {
@@ -93,8 +93,8 @@ function A() {
       if (!(!o || !r)) {
         r.disabled = !0;
         try {
-          const a = await v(o);
-          q(o, a);
+          const s = await v(o);
+          k(o, s);
         } catch {
           l("Network error");
         } finally {
@@ -103,7 +103,7 @@ function A() {
       }
     });
 }
-const b = {
+const q = {
   starts_in: "Starts in {time}",
   ends_in: "Ends in {time}",
   ended: "Ended",
@@ -119,7 +119,7 @@ function C() {
     q: t?.q ?? "",
     type: t?.type ?? "",
     status: t?.status ?? "",
-    i18n: { ...b, ...t?.i18n ?? {} }
+    i18n: { ...q, ...t?.i18n ?? {} }
   };
 }
 function L() {
@@ -155,6 +155,6 @@ function x() {
 }
 function w() {
   const t = C();
-  E(t.i18n), k(), A(), L(), T(t), x();
+  E(t.i18n), b(), A(), L(), T(t), x();
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", w) : w();

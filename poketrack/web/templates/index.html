@@ -10,7 +10,7 @@
     </div>
 
     <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
-      <select name="language" onchange="this.form.submit()"
+      <select name="language" onchange="this.form.submit()" aria-label="{{ t('nav.language') }}"
               class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
                      px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
         {% for code in languages %}
@@ -19,9 +19,9 @@
       </select>
     </form>
 
-    <a href="{{ url_for('settings') }}" title="{{ t('settings.title') }}"
+    <a href="{{ url_for('settings') }}" title="{{ t('settings.title') }}" aria-label="{{ t('settings.title') }}"
        class="shrink-0 text-midnight-muted hover:text-midnight-text text-sm rounded-lg px-3 py-2
-              border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">⚙</a>
+              border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors"><span aria-hidden="true">⚙</span></a>
 
     <button id="refresh-btn"
             class="shrink-0 bg-midnight-primary hover:bg-midnight-primaryHover text-white text-sm font-medium
@@ -36,8 +36,8 @@
   <!-- ──────────────── Heading + stats + last updated ──────────────── -->
   <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
     <div>
-      <h2 class="text-2xl font-bold text-midnight-text">{{ t('events.section_all') }}</h2>
-      <div class="flex items-center gap-3 mt-1 text-sm">
+      <h2 class="text-2xl font-bold text-midnight-text text-balance">{{ t('events.section_all') }}</h2>
+      <div class="flex items-center gap-3 mt-1 text-sm tabular-nums">
         <span class="text-midnight-success">● {{ t('events.stat_live', n=stats.live) }}</span>
         <span class="text-midnight-warning">● {{ t('events.stat_upcoming', n=stats.upcoming) }}</span>
         <span class="text-midnight-faint">{{ t('events.stat_total', n=stats.total) }}</span>
@@ -52,9 +52,10 @@
   <form action="{{ url_for('index') }}" method="get"
         class="flex flex-wrap items-center gap-3 mb-3">
     <input type="text" name="q" value="{{ query }}" placeholder="{{ t('events.search_placeholder') }}"
+           aria-label="{{ t('events.search_placeholder') }}"
            class="flex-1 min-w-[200px] bg-midnight-surface text-midnight-text text-sm rounded-lg
                   border border-midnight-border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
-    <select name="type" onchange="this.form.submit()"
+    <select name="type" onchange="this.form.submit()" aria-label="{{ t('events.all_types') }}"
             class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
                    px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
       <option value="">{{ t('events.all_types') }}</option>
@@ -62,7 +63,7 @@
         <option value="{{ raw }}" {% if raw == current_type %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
-    <select name="status" onchange="this.form.submit()"
+    <select name="status" onchange="this.form.submit()" aria-label="{{ t('events.all_status') }}"
             class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
                    px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
       <option value="">{{ t('events.all_status') }}</option>
@@ -127,8 +128,9 @@
           <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10"
                 data-fav-form data-fav-type="{{ event.event_type }}">
             <input type="hidden" name="type" value="{{ event.event_type }}">
-            <button type="submit" title="{{ t('events.favorite') }}" data-star
-                    class="w-8 h-8 rounded-full bg-midnight-bg/70 backdrop-blur flex items-center justify-center
+            <button type="submit" aria-label="{{ t('events.favorite') }}"
+                    aria-pressed="{{ 'true' if event.favorite else 'false' }}" data-star
+                    class="size-8 rounded-full bg-midnight-bg/70 backdrop-blur flex items-center justify-center
                            {% if event.favorite %}text-midnight-warning{% else %}text-midnight-faint hover:text-midnight-text{% endif %}">
               {% if event.favorite %}★{% else %}☆{% endif %}
             </button>
@@ -148,16 +150,16 @@
                         style="color: {{ event.status_color }};">{{ event.badge }}</span>
                 {% endif %}
                 <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
-                      class="text-[11px] font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
+                      class="text-[11px] font-medium tabular-nums" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
                 {% if event.type_label %}
                   <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
                 {% endif %}
               </div>
-              <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
+              <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 text-balance group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
               {% if event.description %}
-                <p class="text-xs text-midnight-muted mb-3 line-clamp-2">{{ event.description }}</p>
+                <p class="text-xs text-midnight-muted mb-3 line-clamp-2 text-pretty">{{ event.description }}</p>
               {% endif %}
-              <dl class="text-xs text-midnight-muted space-y-1 mb-4">
+              <dl class="text-xs text-midnight-muted space-y-1 mb-4 tabular-nums">
                 <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd></div>
                 <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd></div>
                 <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd></div>
@@ -170,13 +172,15 @@
     </div>
   {% else %}
     <div class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-xl">
-      {{ t('events.empty') }}
+      <p class="mb-3 text-pretty">{{ t('events.empty') }}</p>
+      <a href="{{ url_for('index') }}"
+         class="inline-block text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-accent hover:bg-midnight-surfaceAlt transition-colors">{{ t('events.section_all') }}</a>
     </div>
   {% endif %}
 </main>
 
 <!-- Toast for refresh / auto-update feedback -->
-<div id="toast"
+<div id="toast" role="status" aria-live="polite"
      class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none
             bg-midnight-surfaceAlt border border-midnight-border text-midnight-text text-sm
             rounded-lg px-4 py-2 shadow-lg transition-all duration-300"></div>

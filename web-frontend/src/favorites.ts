@@ -12,6 +12,7 @@ function applyStar(type: string, fav: boolean): void {
   stars.forEach((star) => {
     star.textContent = fav ? "★" : "☆";
     star.style.color = fav ? "var(--mn-warning)" : "var(--mn-text-faint)";
+    star.closest("button")?.setAttribute("aria-pressed", String(fav));
   });
 }
 
