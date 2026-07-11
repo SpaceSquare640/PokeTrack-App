@@ -27,6 +27,7 @@ MIDNIGHT_BLUE: dict[str, str] = {
     "success":       "#34D399",  # active / live
     "warning":       "#FBBF24",  # upcoming / soon
     "danger":        "#F87171",  # error / ended
+    "on_primary":    "#FFFFFF",  # text/icon color on top of primary/brand-colored controls
 }
 
 # Event status -> accent colour. Shared by both UIs so a "LIVE" badge is the

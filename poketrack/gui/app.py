@@ -150,7 +150,7 @@ class PokeTrackApp(ctk.CTk):
 
         self.refresh_btn = ctk.CTkButton(
             bar, text=self.t("nav.refresh"), height=40, corner_radius=8, font=self.font_body,
-            fg_color=C["primary"], hover_color=C["primary_hover"], text_color="#FFFFFF",
+            fg_color=C["primary"], hover_color=C["primary_hover"], text_color=C["on_primary"],
             command=self._on_refresh,
         )
         self.refresh_btn.grid(row=4, column=0, sticky="ew", padx=14, pady=(16, 3))
@@ -253,11 +253,12 @@ class PokeTrackApp(ctk.CTk):
             tools, text="★ " + self.t("events.favorites"), height=36, width=120, corner_radius=8,
             font=self.font_small, command=self._on_toggle_favorites, hover_color=C["border"],
             fg_color=C["primary"] if self._favorites_only else C["surface_alt"],
-            text_color="#FFFFFF" if self._favorites_only else C["text"],
+            text_color=C["on_primary"] if self._favorites_only else C["text"],
         )
         self.fav_btn.grid(row=0, column=2, sticky="e", padx=(10, 0))
         ctk.CTkButton(
-            tools, text="📅", height=36, width=44, corner_radius=8, font=self.font_body,
+            tools, text="📅 " + self.t("events.export_calendar"), height=36, width=170,
+            corner_radius=8, font=self.font_body,
             command=self._on_export_calendar, fg_color=C["surface_alt"], hover_color=C["border"],
             text_color=C["text"],
         ).grid(row=0, column=3, sticky="e", padx=(8, 0))
@@ -296,7 +297,14 @@ class PokeTrackApp(ctk.CTk):
                 ctk.CTkLabel(
                     self.events_scroll, text=self.t("events.empty"),
                     font=self.font_body, text_color=C["text_muted"],
-                ).grid(row=0, column=0, sticky="w", padx=8, pady=24)
+                ).grid(row=0, column=0, sticky="w", padx=8, pady=(24, 8))
+                if self._search_text or self._type_filter or self._favorites_only:
+                    ctk.CTkButton(
+                        self.events_scroll, text=self.t("events.clear_filters"),
+                        height=32, width=150, corner_radius=8, font=self.font_small,
+                        fg_color=C["surface_alt"], hover_color=C["border"],
+                        text_color=C["text"], command=self._on_clear_filters,
+                    ).grid(row=1, column=0, sticky="w", padx=8, pady=(0, 24))
             return
 
         buckets: dict[str, list] = {"active": [], "upcoming": [], "other": []}
@@ -338,7 +346,7 @@ class PokeTrackApp(ctk.CTk):
             # Text line placeholders of varying widths
             for r, width in ((0, 150), (1, 360), (2, 240)):
                 ctk.CTkFrame(card, fg_color=C["surface_alt"], width=width, height=12,
-                             corner_radius=6).grid(row=r, column=1, sticky="w", padx=16,
+                             corner_radius=6).grid(row=r, column=1, sticky="w", padx=14,
                                                    pady=(14 if r == 0 else 6, 6))
 
     def _build_event_card(self, event, row: int) -> None:
@@ -475,6 +483,9 @@ class PokeTrackApp(ctk.CTk):
             win.after(50, win.lift)
         except Exception:  # noqa: BLE001
             pass
+        win.bind("<Escape>", lambda _e: win.destroy())
+        win.protocol("WM_DELETE_WINDOW", win.destroy)
+        win.after(50, win.focus_set)
 
         body = ctk.CTkScrollableFrame(win, fg_color="transparent")
         body.pack(fill="both", expand=True, padx=16, pady=16)
@@ -524,7 +535,7 @@ class PokeTrackApp(ctk.CTk):
         if event.link:
             ctk.CTkButton(actions, text=self.t("events.view_details") + " ↗", height=34,
                           corner_radius=8, font=self.font_small, fg_color=C["primary"],
-                          hover_color=C["primary_hover"], text_color="#FFFFFF",
+                          hover_color=C["primary_hover"], text_color=C["on_primary"],
                           command=lambda u=event.link: webbrowser.open(u)).grid(row=0, column=0, padx=(0, 8))
         ctk.CTkButton(actions, text="📅 " + self.t("events.add_to_calendar"), height=34,
                       corner_radius=8, font=self.font_small, fg_color=C["surface_alt"],
@@ -583,7 +594,7 @@ class PokeTrackApp(ctk.CTk):
             ctk.CTkCheckBox(
                 grid, text=self.t(f"regions.{region}"), variable=var, font=self.font_body,
                 fg_color=C["primary"], hover_color=C["primary_hover"], text_color=C["text"],
-                border_color=C["border"], checkmark_color="#FFFFFF",
+                border_color=C["border"], checkmark_color=C["on_primary"],
             ).grid(row=i // 2, column=i % 2, sticky="w", padx=(0, 24), pady=4)
 
         # Notifications
@@ -592,13 +603,13 @@ class PokeTrackApp(ctk.CTk):
         ctk.CTkCheckBox(
             card, text=self.t("settings.notifications_hint"), variable=self._notif_var,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
-            text_color=C["text"], border_color=C["border"], checkmark_color="#FFFFFF",
+            text_color=C["text"], border_color=C["border"], checkmark_color=C["on_primary"],
         ).grid(row=1, column=0, sticky="w", padx=16, pady=(0, 6))
         self._notif_fav_var = ctk.BooleanVar(value=bool(self.service.config.get("notify_favorites_only", False)))
         ctk.CTkCheckBox(
             card, text=self.t("settings.notify_favorites"), variable=self._notif_fav_var,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
-            text_color=C["text"], border_color=C["border"], checkmark_color="#FFFFFF",
+            text_color=C["text"], border_color=C["border"], checkmark_color=C["on_primary"],
         ).grid(row=2, column=0, sticky="w", padx=16, pady=(0, 14))
 
         # Webhook (custom URL)
@@ -612,13 +623,14 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text"], placeholder_text=self.t("settings.webhook_placeholder"),
         )
         self.webhook_entry.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 8))
+        self.webhook_entry.bind("<Return>", lambda _e: self._on_save_settings())
         existing_url = self.service.config.get("webhook_url", "")
         if existing_url:
             self.webhook_entry.insert(0, existing_url)
         wrow = ctk.CTkFrame(card, fg_color="transparent")
         wrow.grid(row=3, column=0, sticky="w", padx=16, pady=(0, 12))
         ctk.CTkButton(
-            wrow, text=self.t("settings.webhook_test"), height=30, width=120, corner_radius=6,
+            wrow, text=self.t("settings.webhook_test"), height=32, width=120, corner_radius=6,
             font=self.font_small, fg_color=C["surface_alt"], hover_color=C["border"],
             text_color=C["text"], command=self._on_test_webhook,
         ).grid(row=0, column=0)
@@ -634,6 +646,7 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text"], show="•",
         )
         self.webhook_secret_entry.grid(row=5, column=0, sticky="ew", padx=16, pady=(2, 4))
+        self.webhook_secret_entry.bind("<Return>", lambda _e: self._on_save_settings())
         secret = self.service.config.get("webhook_secret", "")
         if secret:
             self.webhook_secret_entry.insert(0, secret)
@@ -652,6 +665,7 @@ class PokeTrackApp(ctk.CTk):
         )
         self.interval_entry.insert(0, str(self.service.config.get("refresh_interval_minutes", 60)))
         self.interval_entry.grid(row=0, column=0, sticky="w")
+        self.interval_entry.bind("<Return>", lambda _e: self._on_save_settings())
         ctk.CTkLabel(
             irow, text=self.t("settings.remind_before"), font=self.font_small, text_color=C["text_muted"],
         ).grid(row=0, column=1, sticky="w", padx=(16, 6))
@@ -661,6 +675,7 @@ class PokeTrackApp(ctk.CTk):
         )
         self.remind_entry.insert(0, str(self.service.config.get("remind_before_minutes", 15)))
         self.remind_entry.grid(row=0, column=2, sticky="w")
+        self.remind_entry.bind("<Return>", lambda _e: self._on_save_settings())
 
         # Configuration import / export
         card = self._settings_card(scroll, 6, self.t("settings.config"))
@@ -686,6 +701,7 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text"], show="•", placeholder_text=self.t("settings.telegram_token"),
         )
         self.tg_token_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 6))
+        self.tg_token_entry.bind("<Return>", lambda _e: self._on_save_settings())
         tok = self.service.config.get("telegram_bot_token", "")
         if tok:
             self.tg_token_entry.insert(0, tok)
@@ -694,6 +710,7 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text"], placeholder_text=self.t("settings.telegram_chat"),
         )
         self.tg_chat_entry.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 14))
+        self.tg_chat_entry.bind("<Return>", lambda _e: self._on_save_settings())
         chat = self.service.config.get("telegram_chat_id", "")
         if chat:
             self.tg_chat_entry.insert(0, chat)
@@ -718,6 +735,7 @@ class PokeTrackApp(ctk.CTk):
             text_color=C["text"], placeholder_text=self.t("settings.timezone"),
         )
         self.tz_entry.grid(row=0, column=1)
+        self.tz_entry.bind("<Return>", lambda _e: self._on_save_settings())
         tz = self.service.config.get("display_timezone", "")
         if tz:
             self.tz_entry.insert(0, tz)
@@ -728,13 +746,13 @@ class PokeTrackApp(ctk.CTk):
         ctk.CTkCheckBox(
             card, text=self.t("settings.tray"), variable=self._tray_var, font=self.font_body,
             fg_color=C["primary"], hover_color=C["primary_hover"], text_color=C["text"],
-            border_color=C["border"], checkmark_color="#FFFFFF",
+            border_color=C["border"], checkmark_color=C["on_primary"],
         ).grid(row=1, column=0, sticky="w", padx=16, pady=(0, 14))
 
         ctk.CTkButton(
             scroll, text=self.t("settings.save"), height=40, width=160, corner_radius=8,
             font=self.font_body, fg_color=C["primary"], hover_color=C["primary_hover"],
-            text_color="#FFFFFF", command=self._on_save_settings,
+            text_color=C["on_primary"], command=self._on_save_settings,
         ).grid(row=10, column=0, sticky="w", pady=(6, 4))
         self.saved_label = ctk.CTkLabel(scroll, text="", font=self.font_small, text_color=C["success"])
         self.saved_label.grid(row=11, column=0, sticky="w", pady=(0, 8))
@@ -787,8 +805,21 @@ class PokeTrackApp(ctk.CTk):
         if hasattr(self, "fav_btn") and self.fav_btn.winfo_exists():
             self.fav_btn.configure(
                 fg_color=C["primary"] if self._favorites_only else C["surface_alt"],
-                text_color="#FFFFFF" if self._favorites_only else C["text"],
+                text_color=C["on_primary"] if self._favorites_only else C["text"],
             )
+        self._render_events()
+
+    def _on_clear_filters(self) -> None:
+        """Reset search/type/favorites filters (the empty-state's "Clear filters" action)."""
+        self._search_text = ""
+        self._type_filter = None
+        self._favorites_only = False
+        if hasattr(self, "search_entry") and self.search_entry.winfo_exists():
+            self.search_entry.delete(0, "end")
+        if hasattr(self, "type_menu") and self.type_menu.winfo_exists():
+            self.type_menu.set(self.t("events.all_types"))
+        if hasattr(self, "fav_btn") and self.fav_btn.winfo_exists():
+            self.fav_btn.configure(fg_color=C["surface_alt"], text_color=C["text"])
         self._render_events()
 
     def _current_filtered_events(self) -> list:
@@ -1065,7 +1096,7 @@ class PokeTrackApp(ctk.CTk):
                 on_refresh=lambda: self._ui_queue.put(("tray", "refresh")),
                 on_quit=lambda: self._ui_queue.put(("tray", "quit")),
                 title=self.t("app.title"),
-                labels=(self.t("nav.events"), self.t("nav.refresh"), "Quit"),
+                labels=(self.t("nav.events"), self.t("nav.refresh"), self.t("nav.quit")),
             )
             if not self._tray.start():
                 self._tray = None

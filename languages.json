@@ -1,10 +1,10 @@
 {
   "en": {
     "app": { "title": "PokéTrack", "subtitle": "Pokémon GO Community Activity Monitor", "tagline": "Track events across regions" },
-    "nav": { "events": "Events", "settings": "Settings", "refresh": "Refresh", "open_web": "Open Web View", "language": "Language", "regions": "Regions" },
+    "nav": { "events": "Events", "settings": "Settings", "refresh": "Refresh", "open_web": "Open Web View", "language": "Language", "regions": "Regions", "quit": "Quit" },
     "events": {
       "section_active": "Active Now", "section_upcoming": "Upcoming", "section_other": "Other Events", "section_all": "All Events",
-      "empty": "No events found for the selected filters.", "starts": "Starts", "ends": "Ends", "type": "Type", "region": "Region",
+      "empty": "No events found for the selected filters.", "clear_filters": "Clear filters", "starts": "Starts", "ends": "Ends", "type": "Type", "region": "Region",
       "view_details": "View Details", "last_updated": "Last updated: {time}", "active_badge": "LIVE", "upcoming_badge": "SOON",
       "ended_badge": "ENDED", "count": "{n} events", "search_placeholder": "Search events…", "all_types": "All Types", "all_status": "All Status",
       "starts_in": "Starts in {time}", "ends_in": "Ends in {time}", "ended": "Ended", "stat_live": "{n} live",
@@ -37,10 +37,10 @@
   },
   "zh-Hant": {
     "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 社群活動監測器", "tagline": "追蹤各地區的活動" },
-    "nav": { "events": "活動", "settings": "設定", "refresh": "重新整理", "open_web": "開啟網頁版", "language": "語言", "regions": "地區" },
+    "nav": { "events": "活動", "settings": "設定", "refresh": "重新整理", "open_web": "開啟網頁版", "language": "語言", "regions": "地區", "quit": "退出" },
     "events": {
       "section_active": "正在進行", "section_upcoming": "即將開始", "section_other": "其他活動", "section_all": "所有活動",
-      "empty": "找不到符合篩選條件的活動。", "starts": "開始", "ends": "結束", "type": "類型", "region": "地區",
+      "empty": "找不到符合篩選條件的活動。", "clear_filters": "清除篩選", "starts": "開始", "ends": "結束", "type": "類型", "region": "地區",
       "view_details": "查看詳情", "last_updated": "最後更新：{time}", "active_badge": "進行中", "upcoming_badge": "即將",
       "ended_badge": "已結束", "count": "{n} 個活動", "search_placeholder": "搜尋活動…", "all_types": "所有類型", "all_status": "所有狀態",
       "starts_in": "{time}後開始", "ends_in": "{time}後結束", "ended": "已結束", "stat_live": "{n} 進行中",
@@ -73,10 +73,10 @@
   },
   "zh-Hans": {
     "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 社群活动监测器", "tagline": "追踪各地区的活动" },
-    "nav": { "events": "活动", "settings": "设置", "refresh": "刷新", "open_web": "打开网页版", "language": "语言", "regions": "地区" },
+    "nav": { "events": "活动", "settings": "设置", "refresh": "刷新", "open_web": "打开网页版", "language": "语言", "regions": "地区", "quit": "退出" },
     "events": {
       "section_active": "正在进行", "section_upcoming": "即将开始", "section_other": "其他活动", "section_all": "所有活动",
-      "empty": "找不到符合筛选条件的活动。", "starts": "开始", "ends": "结束", "type": "类型", "region": "地区",
+      "empty": "找不到符合筛选条件的活动。", "clear_filters": "清除筛选", "starts": "开始", "ends": "结束", "type": "类型", "region": "地区",
       "view_details": "查看详情", "last_updated": "最后更新：{time}", "active_badge": "进行中", "upcoming_badge": "即将",
       "ended_badge": "已结束", "count": "{n} 个活动", "search_placeholder": "搜索活动…", "all_types": "所有类型", "all_status": "所有状态",
       "starts_in": "{time}后开始", "ends_in": "{time}后结束", "ended": "已结束", "stat_live": "{n} 进行中",
@@ -109,10 +109,10 @@
   },
   "ja": {
     "app": { "title": "PokéTrack", "subtitle": "Pokémon GO コミュニティ活動モニター", "tagline": "地域ごとのイベントを追跡" },
-    "nav": { "events": "イベント", "settings": "設定", "refresh": "更新", "open_web": "Web版を開く", "language": "言語", "regions": "地域" },
+    "nav": { "events": "イベント", "settings": "設定", "refresh": "更新", "open_web": "Web版を開く", "language": "言語", "regions": "地域", "quit": "終了" },
     "events": {
       "section_active": "開催中", "section_upcoming": "開催予定", "section_other": "その他のイベント", "section_all": "すべてのイベント",
-      "empty": "条件に一致するイベントがありません。", "starts": "開始", "ends": "終了", "type": "種類", "region": "地域",
+      "empty": "条件に一致するイベントがありません。", "clear_filters": "フィルターを解除", "starts": "開始", "ends": "終了", "type": "種類", "region": "地域",
       "view_details": "詳細を見る", "last_updated": "最終更新：{time}", "active_badge": "開催中", "upcoming_badge": "まもなく",
       "ended_badge": "終了", "count": "{n} 件のイベント", "search_placeholder": "イベントを検索…", "all_types": "すべての種類", "all_status": "すべての状態",
       "starts_in": "{time}後に開始", "ends_in": "{time}後に終了", "ended": "終了", "stat_live": "開催中 {n}",
@@ -145,10 +145,10 @@
   },
   "ko": {
     "app": { "title": "PokéTrack", "subtitle": "Pokémon GO 커뮤니티 활동 모니터", "tagline": "지역별 이벤트 추적" },
-    "nav": { "events": "이벤트", "settings": "설정", "refresh": "새로고침", "open_web": "웹 보기 열기", "language": "언어", "regions": "지역" },
+    "nav": { "events": "이벤트", "settings": "설정", "refresh": "새로고침", "open_web": "웹 보기 열기", "language": "언어", "regions": "지역", "quit": "종료" },
     "events": {
       "section_active": "진행 중", "section_upcoming": "예정", "section_other": "기타 이벤트", "section_all": "모든 이벤트",
-      "empty": "선택한 필터에 맞는 이벤트가 없습니다.", "starts": "시작", "ends": "종료", "type": "유형", "region": "지역",
+      "empty": "선택한 필터에 맞는 이벤트가 없습니다.", "clear_filters": "필터 지우기", "starts": "시작", "ends": "종료", "type": "유형", "region": "지역",
       "view_details": "자세히 보기", "last_updated": "마지막 업데이트: {time}", "active_badge": "진행 중", "upcoming_badge": "곧",
       "ended_badge": "종료", "count": "{n}개 이벤트", "search_placeholder": "이벤트 검색…", "all_types": "모든 유형", "all_status": "모든 상태",
       "starts_in": "{time} 후 시작", "ends_in": "{time} 후 종료", "ended": "종료됨", "stat_live": "진행 {n}",

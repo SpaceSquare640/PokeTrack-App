@@ -11,6 +11,7 @@ import logging
 import threading
 
 from ..app_context import RESOURCE_ROOT
+from .theme import MIDNIGHT_BLUE as C
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,12 @@ def available() -> bool:
     return _OK
 
 
+def _hex_to_rgba(hex_color: str) -> tuple[int, int, int, int]:
+    """``"#RRGGBB"`` -> an opaque ``(r, g, b, 255)`` tuple for PIL."""
+    h = hex_color.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
+
+
 def _icon_image():
     """The PokéTracker radar icon, or a drawn Midnight Blue dot as a fallback."""
     asset = RESOURCE_ROOT / "assets" / "icon.png"
@@ -34,9 +41,9 @@ def _icon_image():
             return Image.open(asset)
     except Exception:  # noqa: BLE001 - fall through to the drawn fallback
         logger.debug("Could not load tray icon asset", exc_info=True)
-    img = Image.new("RGBA", (64, 64), (11, 17, 32, 255))   # #0B1120 background
+    img = Image.new("RGBA", (64, 64), _hex_to_rgba(C["bg"]))
     draw = ImageDraw.Draw(img)
-    draw.ellipse((14, 14, 50, 50), fill=(56, 189, 248, 255))  # #38BDF8 accent
+    draw.ellipse((14, 14, 50, 50), fill=_hex_to_rgba(C["accent"]))
     return img
 
 
