@@ -32,7 +32,7 @@ from ..core.regions import REGIONS
 from ..core.service import PokeTrackService, RefreshResult
 from . import tray as tray_mod
 from .images import ImageLoader
-from .theme import FONT_FAMILY, MIDNIGHT_BLUE as C, status_color
+from .theme import ACTIVE as C, DISPLAY_FONT_FAMILY, FONT_FAMILY, set_theme, status_color
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,11 @@ class PokeTrackApp(ctk.CTk):
             self._footer_imgs = {}
 
         # --- appearance ---
-        ctk.set_appearance_mode("Dark")
+        # Theme (fusion design): "light" or "dark" from config; palette is the
+        # mutable theme.ACTIVE dict, so a rebuild repaints everything.
+        self._theme_mode = "light" if str(self.service.config.get("theme", "")).lower() in ("light", "paper_light") else "dark"
+        set_theme(self._theme_mode)
+        ctk.set_appearance_mode("Light" if self._theme_mode == "light" else "Dark")
         ctk.set_default_color_theme("dark-blue")
         self.title(self.t("app.title"))
         self.geometry("1100x720")
@@ -97,7 +101,8 @@ class PokeTrackApp(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
         # Fonts (created after the Tk root exists).
-        self.font_title = ctk.CTkFont(family=FONT_FAMILY, size=22, weight="bold")
+        self.font_title = ctk.CTkFont(family=DISPLAY_FONT_FAMILY, size=24, weight="bold")
+        self.font_kpi = ctk.CTkFont(family=FONT_FAMILY, size=24, weight="bold")
         self.font_subtitle = ctk.CTkFont(family=FONT_FAMILY, size=12)
         self.font_section = ctk.CTkFont(family=FONT_FAMILY, size=16, weight="bold")
         self.font_card_title = ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold")
@@ -269,23 +274,36 @@ class PokeTrackApp(ctk.CTk):
             title_row, text=self.t("events.section_all"), font=self.font_title, text_color=C["text"]
         ).grid(row=0, column=0, sticky="w")
 
-        stats = ctk.CTkFrame(title_row, fg_color="transparent")
-        stats.grid(row=0, column=1, sticky="w", padx=14)
-        self.stat_live = ctk.CTkLabel(stats, text="", font=self.font_small, text_color=C["success"])
-        self.stat_live.grid(row=0, column=0, padx=(0, 12))
-        self.stat_upcoming = ctk.CTkLabel(stats, text="", font=self.font_small, text_color=C["warning"])
-        self.stat_upcoming.grid(row=0, column=1, padx=(0, 12))
-        self.stat_total = ctk.CTkLabel(stats, text="", font=self.font_small, text_color=C["text_muted"])
-        self.stat_total.grid(row=0, column=2)
-
         self.updated_label = ctk.CTkLabel(
             title_row, text="", font=self.font_small, text_color=C["text_faint"]
         )
         self.updated_label.grid(row=0, column=2, sticky="e")
 
-        # Row 1: search box + type filter
+        # Row 1: KPI stat cards (fusion design)
+        kpis = ctk.CTkFrame(header, fg_color="transparent")
+        kpis.grid(row=1, column=0, sticky="ew", pady=(12, 0))
+        for i in range(4):
+            kpis.grid_columnconfigure(i, weight=1, uniform="kpi")
+
+        def _kpi_card(col: int, caption_key: str, color: str) -> ctk.CTkLabel:
+            card = ctk.CTkFrame(kpis, fg_color=C["surface"], corner_radius=14,
+                                border_width=1, border_color=C["border"])
+            card.grid(row=0, column=col, sticky="ew", padx=(0 if col == 0 else 10, 0))
+            num = ctk.CTkLabel(card, text="0", font=self.font_kpi, text_color=color)
+            num.grid(row=0, column=0, sticky="w", padx=16, pady=(10, 0))
+            ctk.CTkLabel(card, text=self.t(caption_key).upper(), font=self.font_badge,
+                         text_color=C["text_faint"]).grid(row=1, column=0, sticky="w",
+                                                          padx=16, pady=(0, 10))
+            return num
+
+        self.stat_live = _kpi_card(0, "events.kpi_live", C["success"])
+        self.stat_upcoming = _kpi_card(1, "events.kpi_upcoming", C["warning"])
+        self.stat_total = _kpi_card(2, "events.kpi_total", C["text"])
+        self.stat_fav = _kpi_card(3, "events.kpi_favorites", C["accent"])
+
+        # Row 2: search box + type filter
         tools = ctk.CTkFrame(header, fg_color="transparent")
-        tools.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+        tools.grid(row=2, column=0, sticky="ew", pady=(10, 0))
         tools.grid_columnconfigure(0, weight=1)
 
         self.search_entry = ctk.CTkEntry(
@@ -375,6 +393,9 @@ class PokeTrackApp(ctk.CTk):
             buckets["active" if st == "active" else "upcoming" if st == "upcoming" else "other"].append(event)
 
         row = 0
+        # Hero banner for the headline live event (default, unfiltered view only).
+        if buckets["active"] and not (self._search_text or self._type_filter or self._favorites_only):
+            row = self._render_hero(buckets["active"][0], row)
         for bucket, title_key in [
             ("active", "events.section_active"),
             ("upcoming", "events.section_upcoming"),
@@ -505,6 +526,26 @@ class PokeTrackApp(ctk.CTk):
         # Whole card opens the in-app detail view.
         self._bind_click(card, lambda e=event: self._open_detail(e), exclude=[star])
 
+    def _render_hero(self, event, row: int) -> int:
+        """A brand-colored banner for the headline live event. Returns next row."""
+        hero = ctk.CTkFrame(self.events_scroll, fg_color=C["primary"], corner_radius=16)
+        hero.grid(row=row, column=0, sticky="ew", padx=6, pady=(8, 10))
+        hero.grid_columnconfigure(0, weight=1)
+
+        tag = "● " + self.t("events.active_badge")
+        if event.type_label:
+            tag += " · " + event.type_label.upper()
+        ctk.CTkLabel(hero, text=tag, font=self.font_badge, text_color=C["warning"]
+                     ).grid(row=0, column=0, sticky="w", padx=18, pady=(12, 0))
+        ctk.CTkLabel(hero, text=event.name, font=self.font_title, text_color=C["on_primary"],
+                     anchor="w").grid(row=1, column=0, sticky="ew", padx=18, pady=(0, 12))
+        cd = self.service.countdown(event)
+        if cd:
+            ctk.CTkLabel(hero, text=cd, font=self.font_card_title, text_color=C["on_primary"]
+                         ).grid(row=0, column=1, rowspan=2, sticky="e", padx=18)
+        self._bind_click(hero, lambda e=event: self._open_detail(e))
+        return row + 1
+
     def _bind_click(self, root_widget, callback, exclude=()) -> None:
         """Bind left-click on a widget + all descendants to ``callback``.
 
@@ -609,9 +650,11 @@ class PokeTrackApp(ctk.CTk):
             return
         live = sum(1 for e in events if e.status() == "active")
         upcoming = sum(1 for e in events if e.status() == "upcoming")
-        self.stat_live.configure(text="● " + self.t("events.stat_live", n=live))
-        self.stat_upcoming.configure(text="● " + self.t("events.stat_upcoming", n=upcoming))
-        self.stat_total.configure(text=self.t("events.stat_total", n=len(events)))
+        favs = sum(1 for e in events if self.service.is_favorite(e.event_type))
+        self.stat_live.configure(text=str(live))
+        self.stat_upcoming.configure(text=str(upcoming))
+        self.stat_total.configure(text=str(len(events)))
+        self.stat_fav.configure(text=str(favs))
         self._refresh_updated_label()
 
     # ------------------------------------------------------------------ #
@@ -802,6 +845,20 @@ class PokeTrackApp(ctk.CTk):
         if tz:
             self.tz_entry.insert(0, tz)
 
+        # Theme (light/dark) — applied on save via a full UI rebuild.
+        ctk.CTkLabel(trow, text=self.t("events.theme"), font=self.font_small,
+                     text_color=C["text_muted"]).grid(row=0, column=2, padx=(16, 6))
+        self.theme_menu = ctk.CTkOptionMenu(
+            trow, values=[self.t("settings.theme_dark"), self.t("settings.theme_light")], width=120,
+            font=self.font_body, fg_color=C["surface_alt"], button_color=C["primary"],
+            button_hover_color=C["primary_hover"], text_color=C["text"],
+            dropdown_fg_color=C["surface_alt"], dropdown_hover_color=C["border"], dropdown_text_color=C["text"],
+        )
+        self.theme_menu.grid(row=0, column=3)
+        self.theme_menu.set(
+            self.t("settings.theme_light") if self._theme_mode == "light" else self.t("settings.theme_dark")
+        )
+
         # Minimize to tray
         card = self._settings_card(scroll, 9, self.t("settings.tray"))
         self._tray_var = ctk.BooleanVar(value=bool(self.service.config.get("close_to_tray", False)))
@@ -946,6 +1003,15 @@ class PokeTrackApp(ctk.CTk):
             minutes = self.service.config.get("refresh_interval_minutes", 60)
         self.service.set_interval(minutes)
         self.service.set_remind_before(self.remind_entry.get())
+
+        # Theme change last: it rebuilds the whole UI (fresh saved_label included).
+        want = "light" if self.theme_menu.get() == self.t("settings.theme_light") else "dark"
+        if want != self._theme_mode:
+            self._theme_mode = want
+            self.service.config.set("theme", want)
+            set_theme(want)
+            ctk.set_appearance_mode("Light" if want == "light" else "Dark")
+            self._build_ui()
         self.saved_label.configure(text=self.t("settings.saved"))
 
     def _on_test_webhook(self) -> None:

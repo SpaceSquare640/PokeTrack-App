@@ -24,7 +24,7 @@
       "config_exported": "Config exported ✓", "config_imported": "Config imported ✓", "config_import_failed": "Import failed ✗",
       "notify_favorites": "Notify only for favorite event types",
       "telegram": "Telegram alerts", "telegram_token": "Bot token", "telegram_chat": "Chat ID",
-      "time_format": "Time format", "time_24h": "24-hour", "time_12h": "12-hour",
+      "time_format": "Time format", "time_24h": "24-hour", "time_12h": "12-hour", "theme_dark": "Dark", "theme_light": "Light",
       "timezone": "Display timezone", "timezone_hint": "Blank = local. IANA name (e.g. Asia/Taipei). Only meaningful for region-specific events.",
       "tray": "Minimize to system tray on close",
       "save": "Save", "saved": "Settings saved."
@@ -63,7 +63,7 @@
       "config_exported": "設定已匯出 ✓", "config_imported": "設定已匯入 ✓", "config_import_failed": "匯入失敗 ✗",
       "notify_favorites": "只通知最愛的活動類型",
       "telegram": "Telegram 通知", "telegram_token": "Bot Token", "telegram_chat": "Chat ID",
-      "time_format": "時間格式", "time_24h": "24 小時制", "time_12h": "12 小時制",
+      "time_format": "時間格式", "time_24h": "24 小時制", "time_12h": "12 小時制", "theme_dark": "深色", "theme_light": "淺色",
       "timezone": "顯示時區", "timezone_hint": "留空＝本地。IANA 名稱（如 Asia/Taipei）。僅對特定地區活動有意義。",
       "tray": "關閉時最小化到系統匣",
       "save": "儲存", "saved": "設定已儲存。"
@@ -102,7 +102,7 @@
       "config_exported": "设置已导出 ✓", "config_imported": "设置已导入 ✓", "config_import_failed": "导入失败 ✗",
       "notify_favorites": "仅通知收藏的活动类型",
       "telegram": "Telegram 通知", "telegram_token": "Bot Token", "telegram_chat": "Chat ID",
-      "time_format": "时间格式", "time_24h": "24 小时制", "time_12h": "12 小时制",
+      "time_format": "时间格式", "time_24h": "24 小时制", "time_12h": "12 小时制", "theme_dark": "深色", "theme_light": "浅色",
       "timezone": "显示时区", "timezone_hint": "留空＝本地。IANA 名称（如 Asia/Taipei）。仅对特定地区活动有意义。",
       "tray": "关闭时最小化到系统托盘",
       "save": "保存", "saved": "设置已保存。"
@@ -141,7 +141,7 @@
       "config_exported": "設定をエクスポートしました ✓", "config_imported": "設定をインポートしました ✓", "config_import_failed": "インポートに失敗しました ✗",
       "notify_favorites": "お気に入りの種類のみ通知",
       "telegram": "Telegram 通知", "telegram_token": "ボットトークン", "telegram_chat": "チャットID",
-      "time_format": "時刻表示", "time_24h": "24時間", "time_12h": "12時間",
+      "time_format": "時刻表示", "time_24h": "24時間", "time_12h": "12時間", "theme_dark": "ダーク", "theme_light": "ライト",
       "timezone": "表示タイムゾーン", "timezone_hint": "空欄＝ローカル。IANA名（例：Asia/Tokyo）。地域限定イベントのみ有効。",
       "tray": "閉じる時にトレイへ最小化",
       "save": "保存", "saved": "設定を保存しました。"
@@ -180,7 +180,7 @@
       "config_exported": "설정을 내보냈습니다 ✓", "config_imported": "설정을 가져왔습니다 ✓", "config_import_failed": "가져오기 실패 ✗",
       "notify_favorites": "즐겨찾기 유형만 알림",
       "telegram": "Telegram 알림", "telegram_token": "봇 토큰", "telegram_chat": "채팅 ID",
-      "time_format": "시간 형식", "time_24h": "24시간", "time_12h": "12시간",
+      "time_format": "시간 형식", "time_24h": "24시간", "time_12h": "12시간", "theme_dark": "다크", "theme_light": "라이트",
       "timezone": "표시 시간대", "timezone_hint": "비우면 로컬. IANA 이름(예: Asia/Seoul). 지역 한정 이벤트에만 유효.",
       "tray": "닫을 때 트레이로 최소화",
       "save": "저장", "saved": "설정이 저장되었습니다."

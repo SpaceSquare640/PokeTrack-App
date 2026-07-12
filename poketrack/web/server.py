@@ -24,7 +24,7 @@ from flask import (
 from .. import __version__
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService
-from ..gui.theme import MIDNIGHT_BLUE, PAPER_LIGHT, status_color  # shared palettes (no Tk import)
+from ..gui.theme import MIDNIGHT_BLUE, PAPER_LIGHT, STATUS_KEYS, status_color  # shared palettes (no Tk import)
 
 logger = logging.getLogger(__name__)
 
@@ -256,6 +256,8 @@ def _view_model(event, service: PokeTrackService) -> dict:
     data = event.to_dict()
     status = data["status"]
     data["status_color"] = status_color(status)
+    # CSS variable form, so status colours re-theme with the light/dark toggle.
+    data["status_var"] = "--c-" + STATUS_KEYS.get(status, "text_muted").replace("_", "-")
     data["region_label"] = service.t(f"regions.{event.region}")
     data["countdown"] = service.countdown(event)
     data["description"] = service.description(event)

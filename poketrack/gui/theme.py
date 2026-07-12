@@ -52,18 +52,33 @@ PAPER_LIGHT: dict[str, str] = {
     "on_primary":    "#FFFFFF",
 }
 
-# Event status -> accent colour. Shared by both UIs so a "LIVE" badge is the
-# same green everywhere.
-STATUS_COLORS: dict[str, str] = {
-    "active":   MIDNIGHT_BLUE["success"],
-    "upcoming": MIDNIGHT_BLUE["warning"],
-    "ended":    MIDNIGHT_BLUE["text_faint"],
-    "unknown":  MIDNIGHT_BLUE["text_muted"],
+# The palette the desktop UI is currently rendering with. Mutated IN PLACE by
+# :func:`set_theme` so every holder of this dict (``... import ACTIVE as C``)
+# sees the switch; a UI rebuild then repaints with the new values. The web UI
+# doesn't use this — it ships both palettes as CSS variables and switches
+# client-side.
+ACTIVE: dict[str, str] = dict(MIDNIGHT_BLUE)
+
+
+def set_theme(name: str) -> None:
+    """Switch the active desktop palette: ``"light"`` or anything-else = dark."""
+    ACTIVE.clear()
+    ACTIVE.update(PAPER_LIGHT if name == "light" else MIDNIGHT_BLUE)
+
+
+# Event status -> palette key. Shared by both UIs so a "LIVE" badge is the
+# same green everywhere (resolved against the active palette at call time).
+STATUS_KEYS: dict[str, str] = {
+    "active":   "success",
+    "upcoming": "warning",
+    "ended":    "text_faint",
+    "unknown":  "text_muted",
 }
 
 # Clean default on Windows; tkinter/Tailwind fall back gracefully elsewhere.
 FONT_FAMILY = "Segoe UI"
+DISPLAY_FONT_FAMILY = "Georgia"  # serif display headings (fusion design)
 
 
 def status_color(status: str) -> str:
-    return STATUS_COLORS.get(status, MIDNIGHT_BLUE["text_muted"])
+    return ACTIVE[STATUS_KEYS.get(status, "text_muted")]

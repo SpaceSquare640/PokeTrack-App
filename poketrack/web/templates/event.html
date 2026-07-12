@@ -19,10 +19,10 @@
       <div class="flex items-center gap-2 mb-3 flex-wrap">
         {% if event.badge %}
           <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
-                style="color: {{ event.status_color }};">{{ event.badge }}</span>
+                style="color: var({{ event.status_var }});">{{ event.badge }}</span>
         {% endif %}
         <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
-              class="text-xs font-medium" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
+              class="text-xs font-medium" style="color: var({{ event.status_var }});">{{ event.countdown }}</span>
         {% if event.type_label %}
           <span class="text-xs text-midnight-faint">{{ event.type_label }}</span>
         {% endif %}
