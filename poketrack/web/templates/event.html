@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 
-<header class="sticky top-0 z-20 bg-midnight-bgAlt/95 backdrop-blur border-b border-midnight-border">
-  <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-    <a href="{{ url_for('index') }}" class="text-midnight-accent text-sm hover:underline shrink-0">← {{ t('nav.events') }}</a>
-    <h1 class="flex-1 text-lg font-bold text-midnight-text truncate">{{ t('app.title') }}</h1>
-  </div>
-</header>
+<div class="flex items-center gap-4 mb-5">
+  <a href="{{ url_for('index') }}" class="text-midnight-accent text-sm hover:underline shrink-0">← {{ t('nav.events') }}</a>
+  <h1 class="flex-1 font-display text-[24px] text-midnight-text truncate">{{ t('app.title') }}</h1>
+</div>
 
-<main class="max-w-3xl mx-auto px-6 py-6">
-  <article class="bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden">
+<div class="max-w-3xl">
+  <article class="glass-card border border-midnight-border rounded-2xl overflow-hidden">
     {% if event.image %}
       <div class="h-56 bg-midnight-surfaceAlt overflow-hidden">
         <img src="{{ event.image }}" alt="" onerror="this.parentNode.style.display='none'"
@@ -82,5 +80,5 @@
       </div>
     </div>
   </article>
-</main>
+</div>
 {% endblock %}

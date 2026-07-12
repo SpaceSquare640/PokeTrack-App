@@ -17,11 +17,33 @@
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/icon-180.png') }}">
 
+  <!-- Apply the saved theme before first paint (no flash of wrong theme). -->
+  <script>
+    try { if (localStorage.getItem("poketrack-theme") === "light") document.documentElement.classList.add("light"); } catch (e) {}
+  </script>
+
   <!--
-    Tailwind via the Play CDN — no Node build step required. The "midnight"
-    colour scale below is injected straight from poketrack/gui/theme.py, so the
-    web UI shares the exact same Midnight Blue palette as the desktop UI.
+    Dual-theme token layer. Both palettes come from poketrack/gui/theme.py
+    (the single source of truth shared with the desktop UI): MIDNIGHT_BLUE
+    drives :root (dark, default) and PAPER_LIGHT drives html.light. Tailwind
+    colours below reference these variables, so every text-midnight-* /
+    bg-midnight-* class in the templates re-themes automatically.
   -->
+  <style>
+    :root {
+      {% for key, value in palette.items() %}--c-{{ key | replace('_', '-') }}: {{ value }};
+      {% endfor %}--blob-opacity: .13;
+      --card-shadow: 0 12px 34px -14px rgba(0, 0, 0, .55);
+    }
+    html.light {
+      {% for key, value in palette_light.items() %}--c-{{ key | replace('_', '-') }}: {{ value }};
+      {% endfor %}--blob-opacity: .05;
+      --card-shadow: 0 10px 26px -16px rgba(30, 42, 74, .2);
+    }
+    /* Back-compat aliases for the TS bundle + older custom CSS. */
+    :root { --mn-warning: var(--c-warning); --mn-text-faint: var(--c-text-faint); }
+  </style>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -29,67 +51,96 @@
         extend: {
           colors: {
             midnight: {
-              bg:           '{{ palette.bg }}',
-              bgAlt:        '{{ palette.bg_alt }}',
-              surface:      '{{ palette.surface }}',
-              surfaceAlt:   '{{ palette.surface_alt }}',
-              border:       '{{ palette.border }}',
-              primary:      '{{ palette.primary }}',
-              primaryHover: '{{ palette.primary_hover }}',
-              accent:       '{{ palette.accent }}',
-              text:         '{{ palette.text }}',
-              muted:        '{{ palette.text_muted }}',
-              faint:        '{{ palette.text_faint }}',
-              success:      '{{ palette.success }}',
-              warning:      '{{ palette.warning }}',
-              danger:       '{{ palette.danger }}'
+              bg:           'var(--c-bg)',
+              bgAlt:        'var(--c-bg-alt)',
+              surface:      'var(--c-surface)',
+              surfaceAlt:   'var(--c-surface-alt)',
+              border:       'var(--c-border)',
+              primary:      'var(--c-primary)',
+              primaryHover: 'var(--c-primary-hover)',
+              accent:       'var(--c-accent)',
+              text:         'var(--c-text)',
+              muted:        'var(--c-text-muted)',
+              faint:        'var(--c-text-faint)',
+              success:      'var(--c-success)',
+              warning:      'var(--c-warning)',
+              danger:       'var(--c-danger)',
+              onPrimary:    'var(--c-on-primary)'
             }
           },
           fontFamily: {
-            sans: ['Segoe UI', 'system-ui', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+            sans: ['Segoe UI', 'system-ui', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+            display: ['Georgia', 'Times New Roman', 'serif']
           }
         }
       }
     }
   </script>
-
-  <!-- Same hex values exposed as CSS variables for custom styles. -->
-  <style>
-    :root {
-      {% for key, value in palette.items() %}--mn-{{ key | replace('_', '-') }}: {{ value }};
-      {% endfor %}
-    }
-  </style>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-midnight-bg text-midnight-text font-sans min-h-dvh antialiased flex flex-col">
-  {% if update %}
-    <a href="{{ update.url }}" target="_blank" rel="noopener"
-       class="block text-center text-sm bg-midnight-primary/15 border-b border-midnight-primary/40
-              text-midnight-accent hover:bg-midnight-primary/25 px-4 py-2 transition-colors">
-      ⬆ {{ t('update.available', version=update.version) }} →
-    </a>
-  {% endif %}
+<body class="bg-midnight-bg text-midnight-text font-sans min-h-dvh antialiased">
+  <!-- Ambient glow (fades to near-nothing in light mode). -->
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
 
-  <div class="flex-1">{% block content %}{% endblock %}</div>
+  <div class="relative z-10 md:grid md:grid-cols-[232px_1fr] min-h-dvh">
+    <!-- ───────── Sidebar (top bar on mobile) ───────── -->
+    <aside class="sidebar flex md:flex-col items-center md:items-stretch gap-1 md:gap-1
+                  px-3 py-2 md:px-3.5 md:py-6 border-b md:border-b-0 md:border-r border-midnight-border">
+      <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 px-2 md:px-2.5 md:pb-4 shrink-0">
+        <img src="{{ url_for('static', filename='icons/icon-32.png') }}" alt="" width="30" height="30" class="rounded-lg brand-glow">
+        <span class="leading-tight">
+          <b class="text-[15px]">{{ t('app.title') }}</b>
+          <small class="hidden md:block text-midnight-faint text-[10.5px] font-normal">{{ t('app.subtitle') }}</small>
+        </span>
+      </a>
 
-  <footer class="border-t border-midnight-border mt-8">
-    <div class="max-w-6xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-sm">
-      <a href="{{ github_profile_url }}" target="_blank" rel="noopener"
-         class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
-                border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
-        <img src="{{ url_for('static', filename='icons/github-profile.png') }}" alt="" width="20" height="20" class="rounded-full">
-        {{ t('footer.github') }}
-      </a>
-      <a href="{{ discord_url }}" target="_blank" rel="noopener"
-         class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
-                border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
-        <img src="{{ url_for('static', filename='icons/discord.png') }}" alt="" width="20" height="20" class="rounded">
-        {{ t('footer.discord') }}
-      </a>
-      <span class="text-midnight-faint">{{ t('footer.made_by') }}</span>
+      <nav class="flex md:flex-col gap-1 flex-1 md:flex-none overflow-x-auto md:overflow-visible" aria-label="{{ t('nav.events') }}">
+        <a href="{{ url_for('index') }}"
+           class="nav-item {{ 'nav-on' if active_nav == 'events' else '' }}">◈ {{ t('nav.events') }}</a>
+        <a href="{{ url_for('index', fav=1) }}"
+           class="nav-item {{ 'nav-on' if active_nav == 'fav' else '' }}">★ {{ t('events.favorites') }}</a>
+        <a href="{{ url_for('calendar_ics') }}" class="nav-item">🗓 {{ t('events.export_calendar') }}</a>
+        <a href="{{ url_for('settings') }}"
+           class="nav-item {{ 'nav-on' if active_nav == 'settings' else '' }}">⚙ {{ t('settings.title') }}</a>
+      </nav>
+
+      <div class="md:mt-auto md:pt-4 md:border-t border-midnight-border shrink-0">
+        {% if update %}
+          <a href="{{ update.url }}" target="_blank" rel="noopener" class="upd-badge">
+            ⬆ {{ t('update.available', version=update.version) }} →
+          </a>
+        {% endif %}
+        <span class="hidden md:block text-midnight-faint text-[11px] px-2.5 pt-2">{{ t('footer.made_by') }}</span>
+      </div>
+    </aside>
+
+    <!-- ───────── Main ───────── -->
+    <div class="min-w-0 flex flex-col">
+      <main class="flex-1 w-full max-w-[1200px] px-5 md:px-8 pt-6 pb-10">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="border-t border-midnight-border">
+        <div class="max-w-[1200px] px-5 md:px-8 py-4 flex flex-wrap items-center gap-3 text-sm">
+          <a href="{{ github_profile_url }}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
+                    border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
+            <img src="{{ url_for('static', filename='icons/github-profile.png') }}" alt="" width="18" height="18" class="rounded-full">
+            {{ t('footer.github') }}
+          </a>
+          <a href="{{ discord_url }}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 text-midnight-muted hover:text-midnight-text rounded-lg px-3 py-2
+                    border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors">
+            <img src="{{ url_for('static', filename='icons/discord.png') }}" alt="" width="18" height="18" class="rounded">
+            {{ t('footer.discord') }}
+          </a>
+          <span class="text-midnight-faint ml-auto">{{ t('footer.made_by') }} · v{{ version }}</span>
+        </div>
+      </footer>
     </div>
-  </footer>
+  </div>
+
   <!-- TypeScript front-end, compiled by Vite (web-frontend/) to a stable path. -->
   <script type="module" src="{{ url_for('static', filename='dist/app.js') }}"></script>
 </body>

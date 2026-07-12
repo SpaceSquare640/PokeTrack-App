@@ -21,9 +21,10 @@ from flask import (
     Flask, Response, abort, jsonify, redirect, render_template, request, url_for,
 )
 
+from .. import __version__
 from ..core.regions import REGIONS
 from ..core.service import PokeTrackService
-from ..gui.theme import MIDNIGHT_BLUE, status_color  # shared palette (no Tk import)
+from ..gui.theme import MIDNIGHT_BLUE, PAPER_LIGHT, status_color  # shared palettes (no Tk import)
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ def create_app(service: PokeTrackService) -> Flask:
             "languages": translator.available_languages(),
             "language_name": translator.language_name,
             "palette": MIDNIGHT_BLUE,
+            "palette_light": PAPER_LIGHT,
+            "version": __version__,
             "regions_all": REGIONS,
             "selected_regions": service.config.get("regions", ["Global"]),
             "update": service.latest_update(),
@@ -62,9 +65,38 @@ def create_app(service: PokeTrackService) -> Flask:
         fav = request.args.get("fav") == "1"
         events = _filtered(q, type_filter, fav, status)
         last = service.last_updated()
+        vms = [_view_model(e, service) for e in events]
+        pairs = list(zip(events, vms))
+
+        # Fusion layout: sections — live first, upcoming grouped by start date,
+        # then unknown, then past (most recent first).
+        active = [vm for _e, vm in pairs if vm["status"] == "active"]
+        ended = [vm for _e, vm in pairs if vm["status"] == "ended"]
+        other = [vm for _e, vm in pairs if vm["status"] == "unknown"]
+        groups: list[tuple[str, list]] = []
+        if active:
+            groups.append((service.t("events.section_active"), active))
+        by_day: dict[str, list] = {}
+        for e, vm in pairs:  # events arrive sorted by start ASC
+            if vm["status"] == "upcoming":
+                label = e.start.strftime("%b %d, %Y") if e.start else service.t("events.section_upcoming")
+                by_day.setdefault(label, []).append(vm)
+        groups.extend(by_day.items())
+        if other:
+            groups.append((service.t("events.section_other"), other))
+        if ended:
+            groups.append((service.t("events.section_past"), list(reversed(ended))))
+
+        # Hero: the headline live event, only on the default (unfiltered) view.
+        hero = active[0] if active and not (q or type_filter or status or fav) else None
+
         return render_template(
             "index.html",
-            events=[_view_model(e, service) for e in events],
+            events=vms,
+            groups=groups,
+            hero=hero,
+            kpi_fav=sum(1 for vm in vms if vm["favorite"]),
+            active_nav="fav" if fav else "events",
             stats=_stats(events),
             types=[(tp, tp.replace("-", " ").title()) for tp in service.available_types()],
             current_type=type_filter,
@@ -87,7 +119,8 @@ def create_app(service: PokeTrackService) -> Flask:
         event = service.db.get_event(event_id)
         if not event:
             abort(404)
-        return render_template("event.html", event=_view_model(event, service), **base_context())
+        return render_template("event.html", event=_view_model(event, service),
+                               active_nav="events", **base_context())
 
     @app.get("/calendar.ics")
     def calendar_ics():
@@ -154,6 +187,7 @@ def create_app(service: PokeTrackService) -> Flask:
         cfg = service.config
         return render_template(
             "settings.html",
+            active_nav="settings",
             status=request.args.get("status", ""),
             webhook_url=cfg.get("webhook_url", ""),
             webhook_secret=cfg.get("webhook_secret", ""),

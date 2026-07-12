@@ -9,23 +9,24 @@
   "import_failed": ("settings.config_import_failed", "text-midnight-danger")
 } %}
 
-<header class="sticky top-0 z-20 bg-midnight-bgAlt/95 backdrop-blur border-b border-midnight-border">
-  <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-    <a href="{{ url_for('index') }}" class="text-midnight-accent text-sm hover:underline shrink-0">← {{ t('nav.events') }}</a>
-    <h1 class="flex-1 text-xl font-bold text-midnight-text leading-tight">{{ t('settings.title') }}</h1>
-    <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
-      <select name="language" onchange="this.form.submit()" aria-label="{{ t('nav.language') }}"
-              class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
-                     px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
-        {% for code in languages %}
-          <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
-        {% endfor %}
-      </select>
-    </form>
-  </div>
-</header>
+<div class="flex items-center gap-4 mb-5">
+  <a href="{{ url_for('index') }}" class="text-midnight-accent text-sm hover:underline shrink-0">← {{ t('nav.events') }}</a>
+  <h1 class="flex-1 font-display text-[28px] text-midnight-text leading-tight">{{ t('settings.title') }}</h1>
+  <button type="button" class="theme-toggle squish" data-theme-toggle aria-label="{{ t('events.theme') }}">
+    <span data-theme-dark>🌙</span><span data-theme-light>☀️</span>
+  </button>
+  <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
+    <select name="language" onchange="this.form.submit()" aria-label="{{ t('nav.language') }}"
+            class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                   px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+      {% for code in languages %}
+        <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
 
-<main class="max-w-3xl mx-auto px-6 py-6 space-y-6">
+<div class="max-w-3xl space-y-6">
 
   {% if status and status in status_map %}
     <div class="rounded-lg border border-midnight-border bg-midnight-surface px-4 py-3 text-sm {{ status_map[status][1] }}">
@@ -149,5 +150,5 @@
       </form>
     </div>
   </div>
-</main>
+</div>
 {% endblock %}

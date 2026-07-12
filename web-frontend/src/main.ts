@@ -9,6 +9,7 @@ import { showToast } from "./toast";
 import { initCountdowns } from "./countdown";
 import { initInstantSearch } from "./search";
 import { initFavorites } from "./favorites";
+import { initThemeToggle } from "./theme";
 import type { PokeTrackState } from "./types";
 
 const DEFAULT_I18N = {
@@ -87,6 +88,7 @@ function main(): void {
   initCountdowns(state.i18n);
   initInstantSearch();
   initFavorites();
+  initThemeToggle();
   initRefreshButton();
   initPoller(state);
   initServiceWorker();

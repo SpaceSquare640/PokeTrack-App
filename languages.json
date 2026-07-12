@@ -9,7 +9,8 @@
       "ended_badge": "ENDED", "count": "{n} events", "search_placeholder": "Search events…", "all_types": "All Types", "all_status": "All Status",
       "starts_in": "Starts in {time}", "ends_in": "Ends in {time}", "ended": "Ended", "stat_live": "{n} live",
       "stat_upcoming": "{n} upcoming", "stat_total": "{n} total", "new_found": "{n} new",
-      "favorites": "Favorites", "favorite": "Favorite", "export_calendar": "Calendar (.ics)", "add_to_calendar": "Add to calendar"
+      "favorites": "Favorites", "favorite": "Favorite", "export_calendar": "Calendar (.ics)", "add_to_calendar": "Add to calendar",
+      "section_past": "Past events", "kpi_live": "Live now", "kpi_upcoming": "Upcoming", "kpi_total": "Total events", "kpi_favorites": "Favorite types", "theme": "Theme"
     },
     "desc": { "featured_raids": "Featured raids: {names}", "promo": "Promo code: {codes}", "spawns": "increased wild spawns", "research": "special Field Research", "includes": "Includes {items}." },
     "filters": { "all_regions": "All Regions", "apply": "Apply", "title": "Filter by region", "types": "Type" },
@@ -47,7 +48,8 @@
       "ended_badge": "已結束", "count": "{n} 個活動", "search_placeholder": "搜尋活動…", "all_types": "所有類型", "all_status": "所有狀態",
       "starts_in": "{time}後開始", "ends_in": "{time}後結束", "ended": "已結束", "stat_live": "{n} 進行中",
       "stat_upcoming": "{n} 即將", "stat_total": "共 {n}", "new_found": "{n} 個新活動",
-      "favorites": "最愛", "favorite": "加入最愛", "export_calendar": "行事曆 (.ics)", "add_to_calendar": "加入行事曆"
+      "favorites": "最愛", "favorite": "加入最愛", "export_calendar": "行事曆 (.ics)", "add_to_calendar": "加入行事曆",
+      "section_past": "過去活動", "kpi_live": "進行中", "kpi_upcoming": "即將開始", "kpi_total": "總活動數", "kpi_favorites": "收藏類型", "theme": "主題"
     },
     "desc": { "featured_raids": "團體戰精選：{names}", "promo": "優惠代碼：{codes}", "spawns": "野生寶可夢增加", "research": "特殊田野調查", "includes": "包含{items}。" },
     "filters": { "all_regions": "所有地區", "apply": "套用", "title": "依地區篩選", "types": "類型" },
@@ -85,7 +87,8 @@
       "ended_badge": "已结束", "count": "{n} 个活动", "search_placeholder": "搜索活动…", "all_types": "所有类型", "all_status": "所有状态",
       "starts_in": "{time}后开始", "ends_in": "{time}后结束", "ended": "已结束", "stat_live": "{n} 进行中",
       "stat_upcoming": "{n} 即将", "stat_total": "共 {n}", "new_found": "{n} 个新活动",
-      "favorites": "收藏", "favorite": "收藏", "export_calendar": "日历 (.ics)", "add_to_calendar": "加入日历"
+      "favorites": "收藏", "favorite": "收藏", "export_calendar": "日历 (.ics)", "add_to_calendar": "加入日历",
+      "section_past": "过去活动", "kpi_live": "进行中", "kpi_upcoming": "即将开始", "kpi_total": "总活动数", "kpi_favorites": "收藏类型", "theme": "主题"
     },
     "desc": { "featured_raids": "团体战精选：{names}", "promo": "优惠码：{codes}", "spawns": "野生宝可梦增加", "research": "特殊实地调查", "includes": "包含{items}。" },
     "filters": { "all_regions": "所有地区", "apply": "应用", "title": "按地区筛选", "types": "类型" },
@@ -123,7 +126,8 @@
       "ended_badge": "終了", "count": "{n} 件のイベント", "search_placeholder": "イベントを検索…", "all_types": "すべての種類", "all_status": "すべての状態",
       "starts_in": "{time}後に開始", "ends_in": "{time}後に終了", "ended": "終了", "stat_live": "開催中 {n}",
       "stat_upcoming": "予定 {n}", "stat_total": "合計 {n}", "new_found": "新着 {n} 件",
-      "favorites": "お気に入り", "favorite": "お気に入り", "export_calendar": "カレンダー (.ics)", "add_to_calendar": "カレンダーに追加"
+      "favorites": "お気に入り", "favorite": "お気に入り", "export_calendar": "カレンダー (.ics)", "add_to_calendar": "カレンダーに追加",
+      "section_past": "過去のイベント", "kpi_live": "開催中", "kpi_upcoming": "開始予定", "kpi_total": "イベント総数", "kpi_favorites": "お気に入りの種類", "theme": "テーマ"
     },
     "desc": { "featured_raids": "注目レイド：{names}", "promo": "プロモコード：{codes}", "spawns": "野生の出現増加", "research": "特別なフィールドリサーチ", "includes": "{items}を含む。" },
     "filters": { "all_regions": "すべての地域", "apply": "適用", "title": "地域で絞り込み", "types": "種類" },
@@ -161,7 +165,8 @@
       "ended_badge": "종료", "count": "{n}개 이벤트", "search_placeholder": "이벤트 검색…", "all_types": "모든 유형", "all_status": "모든 상태",
       "starts_in": "{time} 후 시작", "ends_in": "{time} 후 종료", "ended": "종료됨", "stat_live": "진행 {n}",
       "stat_upcoming": "예정 {n}", "stat_total": "총 {n}", "new_found": "신규 {n}",
-      "favorites": "즐겨찾기", "favorite": "즐겨찾기", "export_calendar": "캘린더 (.ics)", "add_to_calendar": "캘린더에 추가"
+      "favorites": "즐겨찾기", "favorite": "즐겨찾기", "export_calendar": "캘린더 (.ics)", "add_to_calendar": "캘린더에 추가",
+      "section_past": "지난 이벤트", "kpi_live": "진행 중", "kpi_upcoming": "예정", "kpi_total": "전체 이벤트", "kpi_favorites": "즐겨찾기 유형", "theme": "테마"
     },
     "desc": { "featured_raids": "주요 레이드: {names}", "promo": "프로모 코드: {codes}", "spawns": "야생 출현 증가", "research": "특별 필드 리서치", "includes": "{items} 포함." },
     "filters": { "all_regions": "모든 지역", "apply": "적용", "title": "지역으로 필터", "types": "유형" },

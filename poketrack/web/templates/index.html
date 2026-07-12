@@ -1,183 +1,217 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ───────────────────────── Top bar ───────────────────────── -->
-<header class="sticky top-0 z-20 bg-midnight-bgAlt/95 backdrop-blur border-b border-midnight-border">
-  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center gap-4">
-    <div class="flex-1 min-w-0">
-      <h1 class="text-xl font-bold text-midnight-accent leading-tight">{{ t('app.title') }}</h1>
-      <p class="text-xs text-midnight-muted truncate">{{ t('app.subtitle') }}</p>
-    </div>
-
-    <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
-      <select name="language" onchange="this.form.submit()" aria-label="{{ t('nav.language') }}"
-              class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
-                     px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
-        {% for code in languages %}
-          <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
-        {% endfor %}
-      </select>
+{# ─── Event card (same TS hooks as before: data-event-card/search/group, fav form, countdown) ─── #}
+{% macro event_card(event, group_id) %}
+  <div data-event-card data-group="{{ group_id }}"
+       data-search="{{ (event.name ~ ' ' ~ (event.description or '') ~ ' ' ~ (event.type_label or ''))|lower }}"
+       class="relative group glass-card border border-midnight-border rounded-2xl overflow-hidden
+              flex flex-col hover:border-midnight-accent hover:-translate-y-1 transition-all
+              {{ 'opacity-60' if event.status == 'ended' else '' }}">
+    <!-- Favorite toggle (kept outside the card link) -->
+    <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10"
+          data-fav-form data-fav-type="{{ event.event_type }}">
+      <input type="hidden" name="type" value="{{ event.event_type }}">
+      <button type="submit" aria-label="{{ t('events.favorite') }}"
+              aria-pressed="{{ 'true' if event.favorite else 'false' }}" data-star
+              class="size-8 rounded-full star-chip flex items-center justify-center squish
+                     {% if event.favorite %}text-midnight-warning{% else %}text-midnight-faint hover:text-midnight-text{% endif %}">
+        {% if event.favorite %}★{% else %}☆{% endif %}
+      </button>
     </form>
 
-    <a href="{{ url_for('settings') }}" title="{{ t('settings.title') }}" aria-label="{{ t('settings.title') }}"
-       class="shrink-0 text-midnight-muted hover:text-midnight-text text-sm rounded-lg px-3 py-2
-              border border-midnight-border hover:bg-midnight-surfaceAlt transition-colors"><span aria-hidden="true">⚙</span></a>
-
-    <button id="refresh-btn"
-            class="shrink-0 bg-midnight-primary hover:bg-midnight-primaryHover text-white text-sm font-medium
-                   rounded-lg px-4 py-2 transition-colors">
-      {{ t('nav.refresh') }}
-    </button>
+    <a href="{{ url_for('event_detail', event_id=event.event_id) }}" class="flex flex-col flex-1">
+      {% if event.image %}
+        <div class="h-32 bg-midnight-surfaceAlt overflow-hidden relative">
+          <img src="{{ event.image }}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"
+               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+          {% if event.status == 'active' %}
+            <div class="absolute inset-x-0 bottom-0 h-[3px]"
+                 style="background:linear-gradient(90deg, var(--c-success), transparent);"></div>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="p-5 flex flex-col flex-1">
+        <div class="flex items-center gap-2 mb-2 flex-wrap pr-8">
+          {% if event.badge %}
+            <span class="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-midnight-surfaceAlt"
+                  style="color: {{ event.status_color }};">{{ event.badge }}</span>
+          {% endif %}
+          <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
+                class="text-[11px] font-medium tabular-nums" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
+          {% if event.type_label %}
+            <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
+          {% endif %}
+        </div>
+        <h3 class="font-display text-[17px] text-midnight-text leading-snug mb-2 text-balance group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
+        {% if event.description %}
+          <p class="text-xs text-midnight-muted mb-3 line-clamp-2 text-pretty">{{ event.description }}</p>
+        {% endif %}
+        <dl class="text-xs text-midnight-muted space-y-1 mb-4 tabular-nums">
+          <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd></div>
+          <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd></div>
+          <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd></div>
+        </dl>
+        <span class="mt-auto inline-flex items-center gap-1 text-sm text-midnight-accent">{{ t('events.view_details') }} →</span>
+      </div>
+    </a>
   </div>
-</header>
+{% endmacro %}
 
-<main class="max-w-6xl mx-auto px-6 py-6">
+<!-- ──────────────── Top bar ──────────────── -->
+<div class="flex flex-wrap items-center gap-3 mb-5">
+  <div class="flex-1 min-w-0">
+    <h1 class="font-display text-[32px] leading-tight text-midnight-text text-balance">
+      {{ t('events.favorites') if favorites_only else t('events.section_all') }}</h1>
+    <p class="text-xs text-midnight-faint mt-0.5 tabular-nums">{{ t('events.last_updated', time=last_updated) }}</p>
+  </div>
 
-  <!-- ──────────────── Heading + stats + last updated ──────────────── -->
-  <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
-    <div>
-      <h2 class="text-2xl font-bold text-midnight-text text-balance">{{ t('events.section_all') }}</h2>
-      <div class="flex items-center gap-3 mt-1 text-sm tabular-nums">
-        <span class="text-midnight-success">● {{ t('events.stat_live', n=stats.live) }}</span>
-        <span class="text-midnight-warning">● {{ t('events.stat_upcoming', n=stats.upcoming) }}</span>
-        <span class="text-midnight-faint">{{ t('events.stat_total', n=stats.total) }}</span>
+  <button type="button" class="theme-toggle squish" data-theme-toggle aria-label="{{ t('events.theme') }}">
+    <span data-theme-dark>🌙</span><span data-theme-light>☀️</span>
+  </button>
+
+  <form action="{{ url_for('set_language') }}" method="post" class="shrink-0">
+    <select name="language" onchange="this.form.submit()" aria-label="{{ t('nav.language') }}"
+            class="bg-midnight-surfaceAlt text-midnight-text text-sm rounded-lg border border-midnight-border
+                   px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+      {% for code in languages %}
+        <option value="{{ code }}" {% if code == lang %}selected{% endif %}>{{ language_name(code) }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <a href="{{ url_for('calendar_ics', q=query or none, type=current_type or none, status=current_status or none, fav=(1 if favorites_only else none)) }}"
+     class="shrink-0 text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted
+            hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors squish">📅 {{ t('events.export_calendar') }}</a>
+
+  <button id="refresh-btn"
+          class="shrink-0 bg-midnight-primary hover:bg-midnight-primaryHover text-midnight-onPrimary text-sm font-medium
+                 rounded-lg px-4 py-2 transition-colors squish">
+    ↻ {{ t('nav.refresh') }}
+  </button>
+</div>
+
+<!-- ──────────────── Hero: headline live event ──────────────── -->
+{% if hero %}
+  <a href="{{ url_for('event_detail', event_id=hero.event_id) }}" class="hero block mb-5 group">
+    <span class="hero-tag"><i aria-hidden="true"></i>{{ t('events.active_badge') }}{% if hero.type_label %} · {{ hero.type_label|upper }}{% endif %}</span>
+    <div class="flex items-center gap-6 mt-2">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-[28px] font-extrabold tracking-tight text-balance group-hover:underline underline-offset-4">{{ hero.name }}</h2>
+        {% if hero.description %}<p class="mt-1 text-[13px] font-semibold opacity-80 line-clamp-2 text-pretty">{{ hero.description }}</p>{% endif %}
+      </div>
+      <div class="hero-cd shrink-0 hidden sm:block">
+        <small class="text-[9.5px] tracking-widest uppercase opacity-70">{{ t('events.ends') }}</small>
+        <b data-countdown data-start="{{ hero.start or '' }}" data-end="{{ hero.end or '' }}">{{ hero.countdown }}</b>
       </div>
     </div>
-    <p id="last-updated" class="text-xs text-midnight-faint">
-      {{ t('events.last_updated', time=last_updated) }}
-    </p>
-  </div>
+  </a>
+{% endif %}
 
-  <!-- ──────────────── Search + type filter (GET) ──────────────── -->
-  <form action="{{ url_for('index') }}" method="get"
-        class="flex flex-wrap items-center gap-3 mb-3">
-    <input type="text" name="q" value="{{ query }}" placeholder="{{ t('events.search_placeholder') }}"
-           aria-label="{{ t('events.search_placeholder') }}"
-           class="flex-1 min-w-[200px] bg-midnight-surface text-midnight-text text-sm rounded-lg
-                  border border-midnight-border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
-    <select name="type" onchange="this.form.submit()" aria-label="{{ t('events.all_types') }}"
-            class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
-                   px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
-      <option value="">{{ t('events.all_types') }}</option>
-      {% for raw, label in types %}
-        <option value="{{ raw }}" {% if raw == current_type %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-    <select name="status" onchange="this.form.submit()" aria-label="{{ t('events.all_status') }}"
-            class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
-                   px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
-      <option value="">{{ t('events.all_status') }}</option>
-      <option value="active" {% if current_status == 'active' %}selected{% endif %}>{{ t('events.active_badge') }}</option>
-      <option value="upcoming" {% if current_status == 'upcoming' %}selected{% endif %}>{{ t('events.upcoming_badge') }}</option>
-      <option value="ended" {% if current_status == 'ended' %}selected{% endif %}>{{ t('events.ended_badge') }}</option>
-    </select>
+<!-- ──────────────── KPI row ──────────────── -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5 tabular-nums">
+  <div class="glass-card border border-midnight-border rounded-2xl px-5 py-4 relative overflow-hidden">
+    <div class="text-[27px] font-bold text-midnight-success">{{ stats.live }}</div>
+    <div class="text-midnight-faint text-[11px] uppercase tracking-wider mt-0.5">{{ t('events.kpi_live') }}</div>
+    <div class="spark absolute right-4 bottom-3 text-midnight-success" aria-hidden="true">
+      <i style="height:8px"></i><i style="height:14px"></i><i style="height:10px"></i><i style="height:19px"></i><i style="height:24px"></i>
+    </div>
+  </div>
+  <div class="glass-card border border-midnight-border rounded-2xl px-5 py-4 relative overflow-hidden">
+    <div class="text-[27px] font-bold text-midnight-warning">{{ stats.upcoming }}</div>
+    <div class="text-midnight-faint text-[11px] uppercase tracking-wider mt-0.5">{{ t('events.kpi_upcoming') }}</div>
+    <div class="spark absolute right-4 bottom-3 text-midnight-warning" aria-hidden="true">
+      <i style="height:17px"></i><i style="height:11px"></i><i style="height:21px"></i><i style="height:15px"></i><i style="height:23px"></i>
+    </div>
+  </div>
+  <div class="glass-card border border-midnight-border rounded-2xl px-5 py-4">
+    <div class="text-[27px] font-bold text-midnight-text">{{ stats.total }}</div>
+    <div class="text-midnight-faint text-[11px] uppercase tracking-wider mt-0.5">{{ t('events.kpi_total') }}</div>
+  </div>
+  <div class="glass-card border border-midnight-border rounded-2xl px-5 py-4">
+    <div class="text-[27px] font-bold text-midnight-accent">{{ kpi_fav }}</div>
+    <div class="text-midnight-faint text-[11px] uppercase tracking-wider mt-0.5">{{ t('events.kpi_favorites') }}</div>
+  </div>
+</div>
+
+<!-- ──────────────── Search + type (GET) + status chips ──────────────── -->
+<form action="{{ url_for('index') }}" method="get" class="flex flex-wrap items-center gap-3 mb-3">
+  {% if favorites_only %}<input type="hidden" name="fav" value="1">{% endif %}
+  <input type="text" name="q" value="{{ query }}" placeholder="{{ t('events.search_placeholder') }}"
+         aria-label="{{ t('events.search_placeholder') }}"
+         class="flex-1 min-w-[200px] glass-card text-midnight-text text-sm rounded-lg
+                border border-midnight-border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary">
+  <select name="type" onchange="this.form.submit()" aria-label="{{ t('events.all_types') }}"
+          class="bg-midnight-surface text-midnight-text text-sm rounded-lg border border-midnight-border
+                 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-midnight-primary cursor-pointer">
+    <option value="">{{ t('events.all_types') }}</option>
+    {% for raw, label in types %}
+      <option value="{{ raw }}" {% if raw == current_type %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit"
+          class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                 rounded-lg px-4 py-2.5 border border-midnight-border transition-colors squish">
+    {{ t('filters.apply') }}
+  </button>
+</form>
+
+<nav class="flex flex-wrap gap-2.5 mb-3" aria-label="{{ t('events.all_status') }}">
+  <a class="chip {{ 'chip-on' if not current_status and not favorites_only else '' }}"
+     href="{{ url_for('index', q=query or none, type=current_type or none) }}">{{ t('events.all_status') }}</a>
+  <a class="chip {{ 'chip-on' if current_status == 'active' else '' }}"
+     href="{{ url_for('index', q=query or none, type=current_type or none, status='active', fav=(1 if favorites_only else none)) }}">● {{ t('events.active_badge') }}</a>
+  <a class="chip {{ 'chip-on' if current_status == 'upcoming' else '' }}"
+     href="{{ url_for('index', q=query or none, type=current_type or none, status='upcoming', fav=(1 if favorites_only else none)) }}">{{ t('events.upcoming_badge') }}</a>
+  <a class="chip {{ 'chip-on' if current_status == 'ended' else '' }}"
+     href="{{ url_for('index', q=query or none, type=current_type or none, status='ended', fav=(1 if favorites_only else none)) }}">{{ t('events.ended_badge') }}</a>
+  <a class="chip {{ 'chip-on' if favorites_only else '' }}"
+     href="{{ url_for('index', q=query or none, type=current_type or none, status=current_status or none, fav=(none if favorites_only else 1)) }}">★ {{ t('events.favorites') }}</a>
+</nav>
+
+<!-- ──────────────── Region filter (POST) ──────────────── -->
+<form action="{{ url_for('set_regions') }}" method="post"
+      class="glass-card border border-midnight-border rounded-2xl p-4 mb-6">
+  <p class="text-sm font-semibold text-midnight-muted mb-3">{{ t('filters.title') }}</p>
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+    {% for region in regions_all %}
+      <label class="inline-flex items-center gap-2 text-sm text-midnight-text cursor-pointer select-none">
+        <input type="checkbox" name="regions" value="{{ region }}"
+               {% if region in selected_regions %}checked{% endif %}
+               class="accent-midnight-primary w-4 h-4 rounded">
+        {{ t('regions.' + region) }}
+      </label>
+    {% endfor %}
     <button type="submit"
-            class="bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
-                   rounded-lg px-4 py-2.5 border border-midnight-border transition-colors">
+            class="ml-auto bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
+                   rounded-lg px-4 py-1.5 border border-midnight-border transition-colors squish">
       {{ t('filters.apply') }}
     </button>
-  </form>
-
-  <!-- ──────────────── Favorites + calendar ──────────────── -->
-  <div class="flex flex-wrap items-center gap-3 mb-3">
-    {% if favorites_only %}
-      <a href="{{ url_for('index', q=query or none, type=current_type or none, status=current_status or none) }}"
-         class="text-sm rounded-lg px-4 py-2 border border-midnight-primary text-midnight-accent bg-midnight-surfaceAlt">★ {{ t('events.favorites') }}</a>
-    {% else %}
-      <a href="{{ url_for('index', q=query or none, type=current_type or none, status=current_status or none, fav=1) }}"
-         class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">☆ {{ t('events.favorites') }}</a>
-    {% endif %}
-    <a href="{{ url_for('calendar_ics', q=query or none, type=current_type or none, status=current_status or none, fav=(1 if favorites_only else none)) }}"
-       class="text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-muted hover:text-midnight-text hover:bg-midnight-surfaceAlt transition-colors">📅 {{ t('events.export_calendar') }}</a>
   </div>
+</form>
 
-  <!-- ──────────────── Region filter (POST) ──────────────── -->
-  <form action="{{ url_for('set_regions') }}" method="post"
-        class="bg-midnight-surface border border-midnight-border rounded-xl p-4 mb-6">
-    <p class="text-sm font-semibold text-midnight-muted mb-3">{{ t('filters.title') }}</p>
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-      {% for region in regions_all %}
-        <label class="inline-flex items-center gap-2 text-sm text-midnight-text cursor-pointer select-none">
-          <input type="checkbox" name="regions" value="{{ region }}"
-                 {% if region in selected_regions %}checked{% endif %}
-                 class="accent-midnight-primary w-4 h-4 rounded">
-          {{ t('regions.' + region) }}
-        </label>
-      {% endfor %}
-      <button type="submit"
-              class="ml-auto bg-midnight-surfaceAlt hover:bg-midnight-border text-midnight-text text-sm
-                     rounded-lg px-4 py-1.5 border border-midnight-border transition-colors">
-        {{ t('filters.apply') }}
-      </button>
-    </div>
-  </form>
-
-  <!-- ──────────────── Event grid ──────────────── -->
-  {% if events %}
-    <div data-empty-hint style="display:none"
-         class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-xl">
-      {{ t('events.empty') }}
+<!-- ──────────────── Date-grouped event sections ──────────────── -->
+{% if events %}
+  <div data-empty-hint style="display:none"
+       class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-2xl">
+    {{ t('events.empty') }}
+  </div>
+  {% for label, items in groups %}
+    <div class="day-rule mt-7 mb-3.5" data-event-section="{{ loop.index }}">
+      <b class="text-[12.5px] tracking-[2.5px] uppercase text-midnight-muted tabular-nums">{{ label }}</b>
     </div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {% for event in events %}
-        <div data-event-card
-             data-search="{{ (event.name ~ ' ' ~ (event.description or '') ~ ' ' ~ (event.type_label or ''))|lower }}"
-             class="relative group bg-midnight-surface border border-midnight-border rounded-xl overflow-hidden
-                    flex flex-col hover:border-midnight-primary hover:-translate-y-0.5 transition-all">
-          <!-- Favorite toggle (kept outside the card link) -->
-          <form action="{{ url_for('favorite') }}" method="post" class="absolute top-2 right-2 z-10"
-                data-fav-form data-fav-type="{{ event.event_type }}">
-            <input type="hidden" name="type" value="{{ event.event_type }}">
-            <button type="submit" aria-label="{{ t('events.favorite') }}"
-                    aria-pressed="{{ 'true' if event.favorite else 'false' }}" data-star
-                    class="size-8 rounded-full bg-midnight-bg/70 backdrop-blur flex items-center justify-center
-                           {% if event.favorite %}text-midnight-warning{% else %}text-midnight-faint hover:text-midnight-text{% endif %}">
-              {% if event.favorite %}★{% else %}☆{% endif %}
-            </button>
-          </form>
-
-          <a href="{{ url_for('event_detail', event_id=event.event_id) }}" class="flex flex-col flex-1">
-            {% if event.image %}
-              <div class="h-32 bg-midnight-surfaceAlt overflow-hidden">
-                <img src="{{ event.image }}" alt="" loading="lazy" onerror="this.parentNode.style.display='none'"
-                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-              </div>
-            {% endif %}
-            <div class="p-5 flex flex-col flex-1">
-              <div class="flex items-center gap-2 mb-2 flex-wrap pr-8">
-                {% if event.badge %}
-                  <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-midnight-surfaceAlt"
-                        style="color: {{ event.status_color }};">{{ event.badge }}</span>
-                {% endif %}
-                <span data-countdown data-start="{{ event.start or '' }}" data-end="{{ event.end or '' }}"
-                      class="text-[11px] font-medium tabular-nums" style="color: {{ event.status_color }};">{{ event.countdown }}</span>
-                {% if event.type_label %}
-                  <span class="text-xs text-midnight-faint ml-auto">{{ event.type_label }}</span>
-                {% endif %}
-              </div>
-              <h3 class="text-base font-bold text-midnight-text leading-snug mb-2 text-balance group-hover:text-midnight-accent transition-colors">{{ event.name }}</h3>
-              {% if event.description %}
-                <p class="text-xs text-midnight-muted mb-3 line-clamp-2 text-pretty">{{ event.description }}</p>
-              {% endif %}
-              <dl class="text-xs text-midnight-muted space-y-1 mb-4 tabular-nums">
-                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.region') }}:</dt><dd>{{ event.region_label }}</dd></div>
-                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.starts') }}:</dt><dd>{{ event.start_display }}</dd></div>
-                <div class="flex gap-2"><dt class="text-midnight-faint shrink-0">{{ t('events.ends') }}:</dt><dd>{{ event.end_display }}</dd></div>
-              </dl>
-              <span class="mt-auto inline-flex items-center gap-1 text-sm text-midnight-accent">{{ t('events.view_details') }} →</span>
-            </div>
-          </a>
-        </div>
-      {% endfor %}
+      {% set group_id = loop.index %}
+      {% for event in items %}{{ event_card(event, group_id) }}{% endfor %}
     </div>
-  {% else %}
-    <div class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-xl">
-      <p class="mb-3 text-pretty">{{ t('events.empty') }}</p>
-      <a href="{{ url_for('index') }}"
-         class="inline-block text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-accent hover:bg-midnight-surfaceAlt transition-colors">{{ t('events.section_all') }}</a>
-    </div>
-  {% endif %}
-</main>
+  {% endfor %}
+{% else %}
+  <div class="text-center text-midnight-muted py-20 border border-dashed border-midnight-border rounded-2xl">
+    <p class="mb-3 text-pretty">{{ t('events.empty') }}</p>
+    <a href="{{ url_for('index') }}"
+       class="inline-block text-sm rounded-lg px-4 py-2 border border-midnight-border text-midnight-accent hover:bg-midnight-surfaceAlt transition-colors">{{ t('events.section_all') }}</a>
+  </div>
+{% endif %}
 
 <!-- Toast for refresh / auto-update feedback -->
 <div id="toast" role="status" aria-live="polite"

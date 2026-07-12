@@ -30,6 +30,28 @@ MIDNIGHT_BLUE: dict[str, str] = {
     "on_primary":    "#FFFFFF",  # text/icon color on top of primary/brand-colored controls
 }
 
+# Light-theme counterpart ("Paper") — warm paper editorial tones. Same keys as
+# MIDNIGHT_BLUE so either dict can drive the shared CSS-variable layer; the web
+# UI ships both and toggles at runtime. All text colors clear WCAG AA on their
+# respective surfaces.
+PAPER_LIGHT: dict[str, str] = {
+    "bg":            "#F7F6F2",  # warm paper background
+    "bg_alt":        "#EFEEE8",  # secondary background / sidebar
+    "surface":       "#FFFFFF",  # cards / panels
+    "surface_alt":   "#F2F1EB",  # elevated surfaces
+    "border":        "#E2E0D7",  # hairline borders
+    "primary":       "#2563EB",  # primary action — blue
+    "primary_hover": "#1D4ED8",  # primary hover
+    "accent":        "#0369A1",  # deep sky accent (AA on paper)
+    "text":          "#1C2430",  # primary text — near-ink
+    "text_muted":    "#5B6878",  # secondary text
+    "text_faint":    "#68758a",  # tertiary text (AA 4.5:1+ on bg/surface)
+    "success":       "#0E9F6E",  # active / live
+    "warning":       "#B45309",  # upcoming / soon
+    "danger":        "#DC2626",  # error / ended
+    "on_primary":    "#FFFFFF",
+}
+
 # Event status -> accent colour. Shared by both UIs so a "LIVE" badge is the
 # same green everywhere.
 STATUS_COLORS: dict[str, str] = {

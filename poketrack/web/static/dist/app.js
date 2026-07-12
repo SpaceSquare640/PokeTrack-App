@@ -1,9 +1,9 @@
-async function p() {
+async function w() {
   const t = await fetch("/api/refresh", { method: "POST" });
   if (!t.ok) throw new Error(`refresh failed: ${t.status}`);
   return await t.json();
 }
-async function h(t, e, n = "") {
+async function g(t, e, n = "") {
   const o = new URLSearchParams();
   t && o.set("q", t), e && o.set("type", e), n && o.set("status", n);
   const r = o.toString(), s = await fetch("/api/events" + (r ? "?" + r : ""));
@@ -33,7 +33,7 @@ function m(t, e) {
   const s = Math.floor(n % 3600 / 60);
   return s >= 1 ? t.minute.replace("{n}", String(s)) : t.now;
 }
-function g(t, e, n) {
+function S(t, e, n) {
   return e !== null && t < e ? "upcoming" : n !== null && t > n ? "ended" : e !== null && e <= t && (n === null || t <= n) ? "active" : "unknown";
 }
 function y(t) {
@@ -41,21 +41,21 @@ function y(t) {
   const e = new Date(t).getTime();
   return Number.isNaN(e) ? null : e;
 }
-function S(t, e, n) {
-  const o = y(t.dataset.start ?? null), r = y(t.dataset.end ?? null), s = g(n, o, r);
+function E(t, e, n) {
+  const o = y(t.dataset.start ?? null), r = y(t.dataset.end ?? null), s = S(n, o, r);
   let a = "";
   s === "upcoming" && o !== null ? a = e.starts_in.replace("{time}", m(e, o - n)) : s === "active" && r !== null ? a = e.ends_in.replace("{time}", m(e, r - n)) : s === "ended" && (a = e.ended), t.textContent = a;
 }
-function E(t) {
+function k(t) {
   const e = Array.from(document.querySelectorAll("[data-countdown]"));
   if (e.length === 0) return;
   const n = () => {
     const o = Date.now();
-    for (const r of e) S(r, t, o);
+    for (const r of e) E(r, t, o);
   };
   n(), window.setInterval(n, 1e3);
 }
-function b() {
+function L() {
   const t = document.querySelector('input[name="q"]');
   if (!t) return;
   const e = Array.from(document.querySelectorAll("[data-event-card]"));
@@ -77,7 +77,7 @@ function b() {
   };
   t.addEventListener("input", r);
 }
-function k(t, e) {
+function q(t, e) {
   document.querySelectorAll(
     `[data-fav-form][data-fav-type="${CSS.escape(t)}"] [data-star]`
   ).forEach((o) => {
@@ -94,7 +94,7 @@ function A() {
         r.disabled = !0;
         try {
           const s = await v(o);
-          k(o, s);
+          q(o, s);
         } catch {
           l("Network error");
         } finally {
@@ -103,7 +103,25 @@ function A() {
       }
     });
 }
-const q = {
+const b = "poketrack-theme";
+function T(t) {
+  document.documentElement.classList.toggle("light", t);
+  try {
+    localStorage.setItem(b, t ? "light" : "dark");
+  } catch {
+  }
+}
+function h(t) {
+  const e = document.documentElement.classList.contains("light");
+  t.querySelector("[data-theme-dark]")?.classList.toggle("on", !e), t.querySelector("[data-theme-light]")?.classList.toggle("on", e), t.setAttribute("aria-pressed", String(e));
+}
+function C() {
+  const t = document.querySelector("[data-theme-toggle]");
+  t && (h(t), t.addEventListener("click", () => {
+    T(!document.documentElement.classList.contains("light")), h(t);
+  }));
+}
+const x = {
   starts_in: "Starts in {time}",
   ends_in: "Ends in {time}",
   ended: "Ended",
@@ -112,34 +130,34 @@ const q = {
   minute: "{n}m",
   now: "moments"
 };
-function C() {
+function I() {
   const t = window.POKETRACK;
   return {
     count: t?.count ?? 0,
     q: t?.q ?? "",
     type: t?.type ?? "",
     status: t?.status ?? "",
-    i18n: { ...q, ...t?.i18n ?? {} }
+    i18n: { ...x, ...t?.i18n ?? {} }
   };
 }
-function L() {
+function D() {
   const t = document.getElementById("refresh-btn");
   if (!t) return;
   const e = t.textContent ?? "";
   t.addEventListener("click", async () => {
     t.disabled = !0, t.style.opacity = "0.6", t.textContent = "…";
     try {
-      const n = await p();
+      const n = await w();
       l(n.message || "Done"), window.setTimeout(() => window.location.reload(), 700);
     } catch {
       l("Network error"), t.disabled = !1, t.style.opacity = "1", t.textContent = e;
     }
   });
 }
-function T(t) {
+function M(t) {
   const e = async () => {
     try {
-      const n = await h(t.q, t.type, t.status);
+      const n = await g(t.q, t.type, t.status);
       if (n.length > t.count) {
         const o = l(`↻ ${n.length - t.count} new — click to update`, !0);
         o && (o.style.cursor = "pointer", o.onclick = () => window.location.reload());
@@ -149,12 +167,12 @@ function T(t) {
   };
   window.setInterval(e, 6e4);
 }
-function x() {
+function N() {
   "serviceWorker" in navigator && navigator.serviceWorker.register("/sw.js").catch(() => {
   });
 }
-function w() {
-  const t = C();
-  E(t.i18n), b(), A(), L(), T(t), x();
+function p() {
+  const t = I();
+  k(t.i18n), L(), A(), C(), D(), M(t), N();
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", w) : w();
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", p) : p();
