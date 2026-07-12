@@ -3,6 +3,40 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] — 2026-07-12 — Native desktop shell (Tauri)
+
+Rebuilt the desktop app as a native Rust/Tauri shell, replacing the
+CustomTkinter ceiling that couldn't render the fusion redesign's glassmorphism,
+gradients, and animation. The new shell reuses the web UI verbatim — full CSS
+fidelity, native window chrome, a tiny binary via the OS WebView2 (no bundled
+Chromium) — with zero rewrite of the Python business logic.
+
+### Added
+- **`desktop/` (Tauri, Rust).** On launch: spawn the Flask app as a bundled
+  sidecar, poll its port, then open a native window pointed at it. The window
+  *is* the fusion design (dual theme, hero, KPI cards, glass cards — all of it).
+- **`PokeTrack-server.spec`** freezes `run_web.py` (+ deps, templates/static,
+  `languages.json`, the region map, the optional Rust extension) into a single
+  `poketrack-server.exe`, bundled into the installer as a resource — installing
+  the app needs **no Python**.
+- **Per-user data dir when frozen** (`app_context.py`): writable data
+  (config/DB/image cache) now goes to `%APPDATA%/PokeTrack` instead of next to
+  the executable, since the install directory may be read-only.
+- **Windows Job Object** (`KILL_ON_JOB_CLOSE`) ties the sidecar's lifetime to
+  the app so it can never orphan — verified the server exits with the app even
+  on a hard kill, releasing its port immediately.
+- **NSIS installer** (`PokeTrack_<version>_x64-setup.exe`), per-user install,
+  no admin rights required.
+
+### Notes
+- Verified end-to-end from a real install: installs to `%LOCALAPPDATA%\PokeTrack`,
+  launches, spawns the bundled sidecar, renders the fusion UI with live data.
+- The prior CustomTkinter desktop app (`main.py`, `poketrack/gui/`) is
+  unchanged and still ships as `PokeTrack.exe` for this release; the Tauri
+  shell is the new one going forward. 31 tests pass.
+- CI to build and attach the installer automatically on release is a planned
+  follow-up — this release's installer was built locally.
+
 ## [1.7.0] — 2026-07-12 — Fusion redesign
 
 A full GUI/UI redesign for both interfaces, converged from four explored
@@ -188,6 +222,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.8.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.8.0
 [1.7.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.7.0
 [1.6.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.6.0
 [1.5.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.1
