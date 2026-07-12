@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock 3 — 極簡編輯風</title>
+<style>
+  :root{ --ink:#101418; --paper:#FAFAF7; --mid:#6B7280; --hair:#E3E3DD; --ok:#1a7f5c; --warn:#a16207; }
+  *{margin:0;box-sizing:border-box} html{color-scheme:light}
+  body{background:var(--paper);color:var(--ink);font:15px/1.65 Georgia,"Times New Roman",serif;min-height:100dvh}
+  .sans{font-family:"Segoe UI",system-ui,sans-serif}
+  .mono{font-family:Consolas,"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+  header{border-bottom:2px solid var(--ink);padding:34px 8vw 22px}
+  .kicker{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--mid)}
+  h1{font-size:52px;font-weight:400;letter-spacing:-1.5px;line-height:1.05;margin:8px 0 4px}
+  h1 em{font-style:italic}
+  .dek{color:var(--mid);font-size:16px;font-style:italic}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end}
+  .actions{display:flex;gap:0}
+  .actions a{border:1px solid var(--ink);padding:10px 20px;font-size:12px;letter-spacing:1.5px;
+             text-transform:uppercase;text-decoration:none;color:var(--ink);margin-left:-1px}
+  .actions a:hover{background:var(--ink);color:var(--paper)}
+  /* stats strip */
+  .strip{display:flex;border-bottom:1px solid var(--hair);padding:0 8vw}
+  .strip div{padding:16px 34px 16px 0;margin-right:34px;border-right:1px solid var(--hair)}
+  .strip b{font-size:26px;font-weight:400}
+  .strip span{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mid)}
+  .strip .live b{color:var(--ok)} .strip .soon b{color:var(--warn)}
+  /* filters as text links */
+  .filters{padding:18px 8vw;border-bottom:1px solid var(--hair);display:flex;gap:26px;align-items:baseline}
+  .filters a{text-decoration:none;color:var(--mid);font-size:13px;letter-spacing:.5px}
+  .filters a.on{color:var(--ink);border-bottom:2px solid var(--ink);padding-bottom:2px;font-weight:600}
+  .filters .search{margin-left:auto;color:var(--mid);font-style:italic}
+  /* list-first layout */
+  main{padding:8px 8vw 80px}
+  .day{padding:34px 0 8px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--mid);
+       border-bottom:1px solid var(--ink)}
+  article{display:grid;grid-template-columns:110px 1fr auto;gap:26px;align-items:baseline;
+          padding:22px 0;border-bottom:1px solid var(--hair)}
+  article:hover h3{text-decoration:underline;text-underline-offset:4px}
+  .time{font-size:13px;color:var(--mid)}
+  .status{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:2px 0;margin-bottom:6px}
+  .status.live{color:var(--ok);border-bottom:2px solid var(--ok)}
+  .status.soon{color:var(--warn);border-bottom:2px solid var(--warn)}
+  .status.end{color:var(--mid);border-bottom:2px solid var(--hair)}
+  h3{font-size:24px;font-weight:400;letter-spacing:-.4px;line-height:1.2}
+  h3 .shiny{font-size:16px}
+  .desc{color:var(--mid);font-size:14px;margin-top:6px;max-width:60ch}
+  .tags{margin-top:8px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid)}
+  .tags b{color:var(--ink);font-weight:600}
+  .side{text-align:right}
+  .cd{font-size:13px;color:var(--ink)}
+  .fav{display:inline-block;margin-top:10px;font-size:18px;cursor:pointer;color:#c9c9c0}
+  .fav.on{color:var(--ink)}
+  .ended-sec article{opacity:.5}
+  footer{border-top:2px solid var(--ink);padding:26px 8vw;display:flex;gap:30px;align-items:baseline}
+  footer a{color:var(--ink);font-size:12px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;
+           border-bottom:1px solid var(--ink)}
+  footer .upd{margin-left:auto;font-style:italic;color:var(--mid);font-size:13px}
+  footer .upd a{text-transform:none;letter-spacing:0;font-style:normal}
+</style>
+</head>
+<body>
+  <header>
+    <div class="masthead">
+      <div>
+        <div class="kicker sans">Pokémon GO · Community Activity Monitor</div>
+        <h1>Poké<em>Track</em></h1>
+        <div class="dek">Eighty-one events tracked · updated Jul 12, 2026 at 02:45</div>
+      </div>
+      <div class="actions sans"><a href="#">Refresh</a><a href="#">Calendar</a><a href="#">Settings</a></div>
+    </div>
+  </header>
+  <div class="strip mono">
+    <div class="live"><b>6</b><span class="sans">Live now</span></div>
+    <div class="soon"><b>35</b><span class="sans">Upcoming</span></div>
+    <div><b>81</b><span class="sans">Total</span></div>
+  </div>
+  <nav class="filters sans">
+    <a class="on" href="#">全部</a><a href="#">進行中</a><a href="#">即將開始</a><a href="#">已結束</a><a href="#">★ 最愛</a>
+    <span class="search">搜尋活動…</span>
+  </nav>
+  <main>
+    <div class="day sans">Today — July 12</div>
+    <article>
+      <div class="time mono">14:00<br>–17:00</div>
+      <div>
+        <span class="status sans live">Live · Community Day</span>
+        <h3>Pikachu Community Day Classic <span class="shiny">✨</span></h3>
+        <p class="desc">野生大量出現、特殊田野調查。特色團體戰:Pikachu — 色違遭遇率提升。</p>
+        <div class="tags">Region — <b>Global</b> · Type — <b>Community Day</b></div>
+      </div>
+      <div class="side"><div class="cd mono">2h 47m 後結束</div><span class="fav on">★</span></div>
+    </article>
+    <div class="day sans">Monday — July 14</div>
+    <article>
+      <div class="time mono">06:00<br>Jul 14</div>
+      <div>
+        <span class="status sans soon">Upcoming · Raid Battles</span>
+        <h3>Mega Garchomp Raid Weekend <span class="shiny">✨</span></h3>
+        <p class="desc">特色團體戰:Mega Garchomp、Gible — 皆可遇色違。</p>
+        <div class="tags">Region — <b>Global</b></div>
+      </div>
+      <div class="side"><div class="cd mono">2 天後開始</div><span class="fav">☆</span></div>
+    </article>
+    <div class="day sans">Friday — July 18</div>
+    <article>
+      <div class="time mono">10:00<br>Jul 18</div>
+      <div>
+        <span class="status sans soon">Upcoming · Safari Zone</span>
+        <h3>Safari Zone: Taipei</h3>
+        <p class="desc">野生大量出現。促銷代碼 TAIPEI2026。</p>
+        <div class="tags">Region — <b>Asia</b></div>
+      </div>
+      <div class="side"><div class="cd mono">6 天後開始</div><span class="fav">☆</span></div>
+    </article>
+    <div class="ended-sec">
+      <div class="day sans">Past events</div>
+      <article>
+        <div class="time mono">Jun 03<br>–Jul 01</div>
+        <div>
+          <span class="status sans end">Ended · GO Pass</span>
+          <h3>GO Pass: June</h3>
+          <p class="desc">每日任務與獎勵通行證。</p>
+        </div>
+        <div class="side"><div class="cd mono">已結束</div><span class="fav">☆</span></div>
+      </article>
+    </div>
+  </main>
+  <footer class="sans">
+    <a href="#">GitHub</a><a href="#">Discord</a>
+    <span class="upd">有新版本 — <a href="#">v1.7.0 release notes →</a></span>
+  </footer>
+</body>
+</html>

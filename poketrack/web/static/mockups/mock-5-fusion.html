@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock 5 — 融合版 (1+2+3+4 All-in-One)</title>
+<style>
+  /* ============ TOKEN SYSTEM (from Mock 4) ============ */
+  :root{
+    --bg:#080d1a; --bg2:#0B1120; --surface:rgba(17,24,39,.8); --raised:#1E293B;
+    --line:rgba(148,163,184,.16); --text:#E6EBF4; --muted:#94A3B8; --faint:#8091A8;
+    --primary:#3B82F6; --on-primary:#fff; --accent:#38BDF8;
+    --ok:#34D399; --ok-bg:#34D3991f; --warn:#FBBF24; --warn-bg:#FBBF241f; --end:#8091A8; --end-bg:#8091A81f;
+    --hero-a:#8B7CF6; --hero-b:#3B82F6; --hero-c:#38BDF8; --hero-ink:#0B1120;
+    --shadow:0 12px 34px -14px rgba(0,0,0,.65); --glow:0 0 22px #2563eb55;
+    --blob-o:.14; --glass:blur(12px);
+  }
+  html.light{
+    --bg:#F7F6F2; --bg2:#EFEEE8; --surface:#FFFFFF; --raised:#F2F1EB;
+    --line:#E2E0D7; --text:#1C2430; --muted:#5B6878; --faint:#7C8899;
+    --primary:#2563EB; --on-primary:#fff; --accent:#0369A1;
+    --ok:#0E9F6E; --ok-bg:#0E9F6E12; --warn:#B45309; --warn-bg:#B4530912; --end:#7C8899; --end-bg:#7C889912;
+    --hero-a:#C7D2FE; --hero-b:#93C5FD; --hero-c:#A5F3FC; --hero-ink:#1E2A4A;
+    --shadow:0 10px 26px -16px rgba(30,42,74,.22); --glow:none;
+    --blob-o:.05;
+  }
+  *{margin:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100dvh;
+       font:14px/1.55 "Segoe UI",system-ui,sans-serif}
+  .serif{font-family:Georgia,"Times New Roman",serif;letter-spacing:-.5px;font-weight:400}
+  .num{font-variant-numeric:tabular-nums}
+  /* ambient blobs (Mock 1) — fade out in light mode */
+  .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:var(--blob-o);pointer-events:none;z-index:0;transition:opacity .3s}
+  .b1{width:520px;height:520px;background:#2563EB;top:-180px;right:-100px}
+  .b2{width:420px;height:420px;background:#0EA5E9;bottom:-160px;left:24%}
+  .wrap{position:relative;z-index:1;display:grid;grid-template-columns:232px 1fr;min-height:100dvh}
+  /* ============ SIDEBAR (Mock 1) ============ */
+  aside{border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px;
+        background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:var(--glass)}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 10px 16px}
+  .brand .dot{width:32px;height:32px;border-radius:10px;background:radial-gradient(circle at 30% 30%,var(--accent),var(--primary));box-shadow:var(--glow)}
+  .brand b{font-size:15px} .brand small{display:block;color:var(--faint);font-size:10.5px;font-weight:400}
+  .nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);cursor:pointer;transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
+  .nav:active{transform:scale(.96)}
+  .nav.on{background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--text);box-shadow:inset 2px 0 0 var(--accent)}
+  .side-foot{margin-top:auto;padding:10px 12px;border-top:1px solid var(--line);color:var(--faint);font-size:11px}
+  .upd{display:block;margin-bottom:10px;padding:8px 10px;border-radius:9px;font-size:11.5px;text-decoration:none;
+       background:color-mix(in srgb,var(--primary) 13%,transparent);
+       border:1px solid color-mix(in srgb,var(--primary) 35%,transparent);color:var(--accent)}
+  /* ============ MAIN ============ */
+  main{padding:24px 34px 40px;max-width:1200px}
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  h1{font-size:34px}
+  .sub{color:var(--faint);font-size:12px;margin-top:2px}
+  .toggle{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;cursor:pointer;background:var(--surface)}
+  .toggle span{padding:7px 15px;font-size:12px;color:var(--muted)}
+  .toggle span.on{background:var(--primary);color:var(--on-primary)}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:9px 16px;
+       font-size:13px;cursor:pointer;backdrop-filter:var(--glass);transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
+  .btn:active{transform:scale(.94)}
+  .btn.p{background:linear-gradient(180deg,var(--primary),color-mix(in srgb,var(--primary) 80%,#000));
+         color:var(--on-primary);border-color:transparent;box-shadow:var(--glow)}
+  /* ============ HERO live banner (Mock 2, toned) ============ */
+  .hero{border-radius:20px;padding:22px 28px;margin-bottom:20px;position:relative;overflow:hidden;color:var(--hero-ink);
+        background:linear-gradient(115deg,var(--hero-a),var(--hero-b) 55%,var(--hero-c));box-shadow:var(--shadow)}
+  .hero .tag{display:inline-flex;align-items:center;gap:6px;background:var(--hero-ink);color:#FBBF24;font-weight:800;
+             font-size:10.5px;letter-spacing:1.6px;padding:5px 13px;border-radius:999px;margin-bottom:8px}
+  .hero .tag i{width:7px;height:7px;border-radius:50%;background:#34D399;display:inline-block}
+  .hero h2{font-size:30px;font-weight:800;letter-spacing:-.8px}
+  .hero p{margin-top:4px;font-weight:600;opacity:.8;font-size:13px}
+  .hero .cd{position:absolute;right:26px;top:50%;transform:translateY(-50%);text-align:center;background:var(--hero-ink);
+            color:#fff;border-radius:16px;padding:12px 20px}
+  .hero .cd b{display:block;font-size:24px;color:#FBBF24}
+  .hero .cd small{font-size:9.5px;letter-spacing:1.5px;opacity:.7}
+  /* ============ KPI row (Mock 1) ============ */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 18px;
+       backdrop-filter:var(--glass);box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .n{font-size:27px;font-weight:700;letter-spacing:-.5px}
+  .kpi .l{color:var(--faint);font-size:11px;margin-top:2px;text-transform:uppercase;letter-spacing:.9px}
+  .kpi.ok .n{color:var(--ok)} .kpi.warn .n{color:var(--warn)} .kpi.ac .n{color:var(--accent)}
+  .spark{position:absolute;right:14px;bottom:12px;display:flex;align-items:flex-end;gap:3px;height:24px;opacity:.65}
+  .spark i{width:5px;border-radius:2px;background:currentColor;display:block}
+  /* ============ toolbar ============ */
+  .bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:var(--surface);
+          border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--faint);backdrop-filter:var(--glass)}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-size:12.5px;
+        color:var(--muted);cursor:pointer;transition:transform .12s cubic-bezier(.34,1.56,.64,1)}
+  .chip:active{transform:scale(.93)}
+  .chip.on{border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--accent);
+           background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  /* ============ date-grouped sections (Mock 3) ============ */
+  .day{margin:22px 0 12px;display:flex;align-items:baseline;gap:12px}
+  .day b{font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted)}
+  .day::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+        backdrop-filter:var(--glass);box-shadow:var(--shadow);transition:transform .16s,border-color .16s}
+  .card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+  .thumb{height:112px;background:var(--raised);display:grid;place-items:center;font-size:40px;position:relative}
+  .live-strip{position:absolute;inset:auto 0 0;height:3px;background:linear-gradient(90deg,var(--ok),transparent)}
+  .cb{padding:14px 16px}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .pill{font-size:10px;font-weight:700;letter-spacing:.6px;padding:3px 10px;border-radius:999px}
+  .pill.live{background:var(--ok-bg);color:var(--ok);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ok) 35%,transparent)}
+  .pill.soon{background:var(--warn-bg);color:var(--warn);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--warn) 35%,transparent)}
+  .pill.end{background:var(--end-bg);color:var(--end)}
+  .cd2{margin-left:auto;font-size:11px;color:var(--muted)}
+  .card h3{font-size:16.5px;margin-bottom:4px;font-family:Georgia,serif;font-weight:400;letter-spacing:-.2px}
+  .desc{color:var(--muted);font-size:12px;line-height:1.55}
+  .shiny{color:var(--warn)}
+  .meta{display:flex;gap:14px;margin-top:12px;color:var(--faint);font-size:11.5px}
+  .star{margin-left:auto;cursor:pointer;color:var(--faint);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+  .star:active{transform:scale(1.5)} .star.on{color:var(--warn)}
+  footer{border-top:1px solid var(--line);margin:36px -34px -40px;padding:18px 34px;display:flex;align-items:center;
+         gap:12px;color:var(--faint);font-size:12px}
+  footer a{color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:7px 14px;background:var(--surface)}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="wrap">
+  <aside>
+    <div class="brand"><div class="dot"></div><div><b>PokéTrack</b><small>Community Monitor</small></div></div>
+    <div class="nav on">◈ 活動總覽</div>
+    <div class="nav">☆ 我的最愛</div>
+    <div class="nav">🗓 行事曆</div>
+    <div class="nav">⚙ 設定</div>
+    <div class="side-foot">
+      <a class="upd" href="#">⬆ 有新版本 v1.7.0 →</a>
+      Made by SpaceSquare640
+    </div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div><h1 class="serif">活動<em>總覽</em></h1><div class="sub">最後更新 Jul 12, 2026 · 02:45 · Leek Duck</div></div>
+      <div class="toggle" onclick="document.documentElement.classList.toggle('light');this.querySelectorAll('span').forEach(s=>s.classList.toggle('on'))">
+        <span class="on">🌙</span><span>☀️</span>
+      </div>
+      <button class="btn">📅 .ics</button><button class="btn p">↻ 重新整理</button>
+    </div>
+
+    <section class="hero">
+      <span class="tag"><i></i>LIVE NOW · COMMUNITY DAY</span>
+      <h2>Pikachu Community Day Classic</h2>
+      <p>野生大量出現 · 特殊田野調查 · Pikachu ✨ 色違機率提升</p>
+      <div class="cd"><small>結束倒數</small><b class="num">02:47:11</b></div>
+    </section>
+
+    <div class="kpis">
+      <div class="kpi ok"><div class="n num">6</div><div class="l">進行中</div><div class="spark" style="color:var(--ok)"><i style="height:8px"></i><i style="height:14px"></i><i style="height:10px"></i><i style="height:19px"></i><i style="height:24px"></i></div></div>
+      <div class="kpi warn"><div class="n num">35</div><div class="l">即將開始</div><div class="spark" style="color:var(--warn)"><i style="height:17px"></i><i style="height:11px"></i><i style="height:21px"></i><i style="height:15px"></i><i style="height:23px"></i></div></div>
+      <div class="kpi"><div class="n num">81</div><div class="l">總活動數</div></div>
+      <div class="kpi ac"><div class="n num">12</div><div class="l">收藏類型</div></div>
+    </div>
+
+    <div class="bar">
+      <div class="search">🔍 搜尋活動…</div>
+      <div class="chip on">全部</div><div class="chip">LIVE</div><div class="chip">即將</div><div class="chip">已結束</div><div class="chip">★ 最愛</div>
+    </div>
+
+    <div class="day"><b>Today — July 12</b></div>
+    <div class="grid">
+      <div class="card"><div class="thumb">⚡<div class="live-strip"></div></div><div class="cb">
+        <div class="row"><span class="pill live">LIVE</span><span style="color:var(--faint);font-size:11px">Community Day</span><span class="cd2 num">2h 47m 後結束</span></div>
+        <h3>Pikachu Community Day Classic</h3>
+        <p class="desc">野生大量出現、特殊田野調查。特色團體戰:Pikachu <span class="shiny">✨</span></p>
+        <div class="meta"><span>🌐 全球</span><span class="num">14:00 – 17:00</span><span class="star on">★</span></div>
+      </div></div>
+      <div class="card"><div class="thumb">🔬</div><div class="cb">
+        <div class="row"><span class="pill live">LIVE</span><span style="color:var(--faint);font-size:11px">Research</span><span class="cd2 num">5 天後結束</span></div>
+        <h3>Water Festival Research</h3>
+        <p class="desc">特殊田野調查 · 水系寶可夢大量出現</p>
+        <div class="meta"><span>🌐 全球</span><span class="num">07/10 – 07/17</span><span class="star">☆</span></div>
+      </div></div>
+    </div>
+
+    <div class="day"><b>Monday — July 14</b></div>
+    <div class="grid">
+      <div class="card"><div class="thumb">🐉</div><div class="cb">
+        <div class="row"><span class="pill soon">SOON</span><span style="color:var(--faint);font-size:11px">Raid Battles</span><span class="cd2 num">2 天後開始</span></div>
+        <h3>Mega Garchomp Raid Weekend</h3>
+        <p class="desc">特色團體戰:Mega Garchomp <span class="shiny">✨</span>、Gible <span class="shiny">✨</span></p>
+        <div class="meta"><span>🌐 全球</span><span class="num">07/14 – 07/15</span><span class="star">☆</span></div>
+      </div></div>
+      <div class="card" style="opacity:.62"><div class="thumb">🎫</div><div class="cb">
+        <div class="row"><span class="pill end">ENDED</span><span style="color:var(--faint);font-size:11px">GO Pass</span><span class="cd2">已結束</span></div>
+        <h3>GO Pass: June</h3>
+        <p class="desc">每日任務與獎勵通行證。</p>
+        <div class="meta"><span>🌐 全球</span><span class="num">06/03 – 07/01</span><span class="star">☆</span></div>
+      </div></div>
+    </div>
+
+    <footer>
+      <a href="#">🐙 GitHub</a><a href="#">💬 Discord</a><span style="margin-left:auto">Made by SpaceSquare640 · v1.6.0</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

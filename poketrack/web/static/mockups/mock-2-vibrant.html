@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock 2 — 電玩/寶可夢活力風</title>
+<style>
+  :root{
+    --bg:#0F1024; --card:#1A1B3A; --line:#2E2F5B;
+    --text:#F1F2FF; --muted:#A9ABD6;
+    --pink:#FF5D8F; --yellow:#FFD166; --cyan:#3EE0F0; --green:#3DDC97; --purple:#8B7CF6;
+  }
+  *{margin:0;box-sizing:border-box} html{color-scheme:dark}
+  body{background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",system-ui,sans-serif;min-height:100dvh;
+       background-image:radial-gradient(#2E2F5B 1.2px,transparent 1.2px);background-size:26px 26px}
+  .top{position:sticky;top:0;z-index:5;background:#0F1024ee;border-bottom:3px solid var(--line);
+       padding:16px 28px;display:flex;align-items:center;gap:16px}
+  .logo{width:44px;height:44px;border-radius:14px;background:conic-gradient(from 200deg,var(--pink),var(--purple),var(--cyan),var(--pink));
+        display:grid;place-items:center;font-size:22px;transform:rotate(-6deg);box-shadow:4px 4px 0 #000}
+  .top h1{font-size:22px;font-weight:900;letter-spacing:-.5px}
+  .top h1 span{background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lvl{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+  .xp{width:150px;height:12px;border-radius:999px;background:#000;border:2px solid var(--line);overflow:hidden}
+  .xp i{display:block;height:100%;width:64%;border-radius:999px;background:linear-gradient(90deg,var(--green),var(--cyan))}
+  .btn{border:0;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:800;cursor:pointer;
+       box-shadow:0 5px 0 #00000088;transition:transform .1s,box-shadow .1s}
+  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #00000088}
+  .btn.go{background:linear-gradient(180deg,var(--pink),#E23670);color:#fff}
+  main{max-width:1140px;margin:0 auto;padding:30px 28px 60px}
+  /* hero */
+  .hero{border-radius:24px;padding:26px 30px;margin-bottom:26px;position:relative;overflow:hidden;
+        background:linear-gradient(120deg,#8B7CF6 0%,#5B5BD6 45%,#3EE0F0 100%);color:#0F1024;
+        box-shadow:8px 8px 0 #000}
+  .hero .tag{display:inline-block;background:#0F1024;color:var(--yellow);font-weight:900;font-size:11px;
+             letter-spacing:1.5px;padding:6px 14px;border-radius:999px;margin-bottom:10px}
+  .hero h2{font-size:34px;font-weight:900;letter-spacing:-1px;line-height:1.1}
+  .hero p{margin-top:6px;font-weight:600;opacity:.85}
+  .hero .cd{position:absolute;right:30px;top:50%;transform:translateY(-50%);text-align:center;background:#0F1024;
+            color:#fff;border-radius:18px;padding:14px 22px;box-shadow:5px 5px 0 #00000055}
+  .hero .cd b{display:block;font-size:26px;font-variant-numeric:tabular-nums;color:var(--yellow)}
+  .hero .cd small{font-size:10px;letter-spacing:1px;color:var(--muted)}
+  /* stats blocks */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:26px}
+  .st{border-radius:20px;padding:18px 20px;font-weight:900;box-shadow:6px 6px 0 #000;border:3px solid #000}
+  .st b{font-size:34px;display:block;font-variant-numeric:tabular-nums}
+  .st span{font-size:12px;letter-spacing:1px}
+  .st.a{background:var(--green);color:#052e1c}.st.b{background:var(--yellow);color:#3d2b00}.st.c{background:var(--cyan);color:#01343c}
+  /* filter chips */
+  .chips{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+  .chip{border:3px solid var(--line);background:var(--card);border-radius:999px;padding:10px 20px;font-weight:800;
+        font-size:13px;color:var(--muted);cursor:pointer}
+  .chip.on{border-color:var(--pink);color:#fff;background:linear-gradient(180deg,#FF5D8F33,transparent);
+           box-shadow:0 0 0 3px #FF5D8F33}
+  /* cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:22px}
+  .card{background:var(--card);border:3px solid var(--line);border-radius:22px;overflow:hidden;
+        transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+  .card:hover{transform:translateY(-6px) rotate(-.5deg);border-color:var(--purple)}
+  .thumb{height:130px;display:grid;place-items:center;font-size:52px;border-bottom:3px solid var(--line)}
+  .t1{background:linear-gradient(135deg,#FFD16633,#FF5D8F33)} .t2{background:linear-gradient(135deg,#8B7CF633,#3EE0F033)}
+  .t3{background:linear-gradient(135deg,#3DDC9733,#3EE0F033)} .t4{background:#00000044}
+  .cb{padding:16px 18px 18px}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .badge{font-size:10px;font-weight:900;letter-spacing:1px;padding:5px 12px;border-radius:999px;border:2px solid #000;box-shadow:2px 2px 0 #000}
+  .badge.live{background:var(--green);color:#052e1c}.badge.soon{background:var(--yellow);color:#3d2b00}.badge.end{background:#55568a;color:#dcdcf4}
+  .cd2{margin-left:auto;font-size:12px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums}
+  .card h3{font-size:17px;font-weight:900;letter-spacing:-.3px}
+  .desc{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .shiny{color:var(--yellow)}
+  .meta{display:flex;gap:12px;margin-top:12px;font-size:12px;color:var(--muted);font-weight:600}
+  .fav{margin-left:auto;width:38px;height:38px;border-radius:12px;border:3px solid var(--line);background:#0F1024;
+       display:grid;place-items:center;cursor:pointer;font-size:16px;box-shadow:3px 3px 0 #000}
+  .fav.on{background:var(--yellow);color:#3d2b00;border-color:#000}
+  footer{border-top:3px solid var(--line);margin-top:44px;padding:22px 28px;display:flex;gap:14px;align-items:center;justify-content:center}
+  footer a{font-weight:800;color:#fff;text-decoration:none;border:3px solid var(--line);border-radius:14px;
+           padding:10px 20px;background:var(--card);box-shadow:4px 4px 0 #000}
+  footer a:hover{border-color:var(--cyan)}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="logo">🎯</div>
+    <h1>Poké<span>Track</span></h1>
+    <div class="lvl">TRAINER · 81 events tracked <div class="xp"><i></i></div></div>
+    <button class="btn go">↻ 重新整理</button>
+  </div>
+  <main>
+    <section class="hero">
+      <span class="tag">⚡ LIVE NOW</span>
+      <h2>Pikachu Community Day</h2>
+      <p>野生大量出現 · 特殊田野調查 · Pikachu ✨ 色違機率 UP</p>
+      <div class="cd"><small>結束倒數</small><b>02:47:11</b></div>
+    </section>
+    <div class="stats">
+      <div class="st a"><b>6</b><span>進行中 LIVE</span></div>
+      <div class="st b"><b>35</b><span>即將開始 SOON</span></div>
+      <div class="st c"><b>81</b><span>追蹤中 TOTAL</span></div>
+    </div>
+    <div class="chips">
+      <div class="chip on">🔥 全部</div><div class="chip">⚡ LIVE</div><div class="chip">⏰ 即將</div>
+      <div class="chip">★ 最愛</div><div class="chip">🗓 行事曆</div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="thumb t1">🐉</div><div class="cb">
+        <div class="row"><span class="badge soon">SOON</span><span class="cd2">2 天後</span></div>
+        <h3>Mega Garchomp Raid Weekend</h3>
+        <p class="desc">特色團體戰:Mega Garchomp <span class="shiny">✨</span>、Gible <span class="shiny">✨</span></p>
+        <div class="meta"><span>🌐 全球</span><span>07/14 – 07/15</span><div class="fav on">★</div></div>
+      </div></div>
+      <div class="card"><div class="thumb t2">🏝</div><div class="cb">
+        <div class="row"><span class="badge soon">SOON</span><span class="cd2">6 天後</span></div>
+        <h3>Safari Zone: Taipei</h3>
+        <p class="desc">野生大量出現 · 促銷代碼 <b style="color:var(--pink)">TAIPEI2026</b></p>
+        <div class="meta"><span>📍 亞洲</span><span>07/18 – 07/20</span><div class="fav">☆</div></div>
+      </div></div>
+      <div class="card"><div class="thumb t3">🔬</div><div class="cb">
+        <div class="row"><span class="badge live">LIVE</span><span class="cd2">5 天後結束</span></div>
+        <h3>Research Day: Water Festival</h3>
+        <p class="desc">特殊田野調查 · 水系寶可夢大量出現</p>
+        <div class="meta"><span>🌐 全球</span><span>07/10 – 07/17</span><div class="fav">☆</div></div>
+      </div></div>
+      <div class="card" style="opacity:.55"><div class="thumb t4">🎫</div><div class="cb">
+        <div class="row"><span class="badge end">ENDED</span><span class="cd2">已結束</span></div>
+        <h3>GO Pass: June</h3>
+        <p class="desc">每日任務與獎勵通行證</p>
+        <div class="meta"><span>🌐 全球</span><span>06/03 – 07/01</span><div class="fav">☆</div></div>
+      </div></div>
+    </div>
+  </main>
+  <footer>
+    <a href="#">🐙 GitHub</a><a href="#">💬 Discord Community</a>
+  </footer>
+</body>
+</html>

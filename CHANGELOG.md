@@ -3,6 +3,43 @@
 All notable changes to PokéTrack are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-07-12 — Fusion redesign
+
+A full GUI/UI redesign for both interfaces, converged from four explored
+directions (modern dashboard, playful/vibrant, minimalist editorial, dual
+light/dark) into one "fusion" design, prototyped as static mockups
+(`poketrack/web/static/mockups/`) before implementation.
+
+### Added
+- **Dual theme (light/dark), both UIs.** A new `PAPER_LIGHT` palette in
+  `theme.py` (same keys as `MIDNIGHT_BLUE`). Web ships both as CSS variables
+  and toggles client-side (persisted via `localStorage`, applied before first
+  paint — no flash). Desktop reads a mutable `theme.ACTIVE` palette; switching
+  in Settings rebuilds the UI in place and persists to `config.json`.
+- **Dashboard layout.** Persistent sidebar (web) / KPI stat cards (both UIs):
+  live / upcoming / total / favorite-type counts, with sparkline accents on
+  web.
+- **Live hero banner** — a brand-colored, clickable spotlight for the
+  headline active event with a live countdown, shown on the default
+  unfiltered view.
+- **Date-grouped sections** (web) — live first, then upcoming grouped by
+  start date, then past events (most recent first); instant search now also
+  collapses emptied date-group headers.
+- **Status filter chips** (web) — all/live/upcoming/ended/favorites as
+  server-linked pills alongside the existing search/type filters.
+- Serif display typography for headings on both UIs (editorial-influenced).
+- Mockups (`poketrack/web/static/mockups/`) kept in the repo as design
+  references for future iteration.
+
+### Changed
+- Status colours (badges, countdowns) now resolve against the active theme
+  instead of a hardcoded dark-mode hex, so they're correct in both themes.
+
+### Notes
+- No functional/data changes. 31 tests pass. Verified in-browser (both
+  themes round-trip, 0 unnamed interactive controls, no console errors) and
+  via headless desktop construction (hero + KPI + light/dark rebuild).
+
 ## [1.6.0] — 2026-07-12 — Update check & community links
 
 ### Added
@@ -151,6 +188,7 @@ best, with graceful fallback so nothing is a hard requirement.
 - ScrapedDuck (Leek Duck) source, SQLite persistence, APScheduler updates,
   i18n (English / Traditional Chinese / Simplified Chinese), region filtering.
 
+[1.7.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.7.0
 [1.6.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.6.0
 [1.5.1]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.1
 [1.5.0]: https://github.com/SpaceSquare640/PokeTrack-App/releases/tag/v1.5.0
