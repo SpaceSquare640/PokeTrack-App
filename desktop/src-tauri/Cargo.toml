@@ -1,0 +1,22 @@
+[package]
+name = "poketrack-desktop"
+version = "0.1.0"
+description = "PokéTrack native desktop shell (Tauri) around the web UI"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+# For a Job Object that kills the spawned server when this app exits (any way).
+windows-sys = { version = "0.59", features = ["Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security", "Win32_Foundation"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

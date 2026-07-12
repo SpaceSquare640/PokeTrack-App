@@ -8,6 +8,7 @@ root, so the app works regardless of the current working directory.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -24,9 +25,25 @@ _FROZEN = getattr(sys, "frozen", False)
 # frozen by PyInstaller these live in the unpacked temp dir (_MEIPASS).
 RESOURCE_ROOT = Path(getattr(sys, "_MEIPASS", "")) if _FROZEN else Path(__file__).resolve().parent.parent
 
+
+def _user_data_dir() -> Path:
+    """Per-user writable data dir (used when installed, e.g. under Program Files)."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA") or os.environ.get("LOCALAPPDATA") or str(Path.home())
+        return Path(base) / "PokeTrack"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "PokeTrack"
+    return Path(os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")) / "PokeTrack"
+
+
 # ROOT — writable location for config.json, the SQLite DB and the image cache.
-# Next to the executable when frozen; the project root otherwise.
-ROOT = Path(sys.executable).parent if _FROZEN else Path(__file__).resolve().parent.parent
+# A per-user data dir when frozen (the install dir may be read-only, e.g. Program
+# Files); the project root when running from source.
+if _FROZEN:
+    ROOT = _user_data_dir()
+    ROOT.mkdir(parents=True, exist_ok=True)
+else:
+    ROOT = Path(__file__).resolve().parent.parent
 
 
 def configure_logging(level: int = logging.INFO) -> None:

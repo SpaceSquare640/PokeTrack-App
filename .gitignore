@@ -30,6 +30,13 @@ node_modules/
 web-frontend/node_modules/
 .vite/
 
+# Desktop shell (Tauri) + PyInstaller server sidecar build artifacts.
+# The sidecar exe is rebuilt from PokeTrack-server.spec; not committed (40MB+).
+desktop/src-tauri/binaries/*.exe
+desktop/src-tauri/gen/
+dist-server/
+build-server/
+
 # IDE
 .vscode/
 .idea/
