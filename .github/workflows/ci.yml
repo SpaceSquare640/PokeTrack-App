@@ -113,6 +113,18 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Placeholder sidecar binary
+        # tauri.conf.json declares binaries/poketrack-server.exe as a bundle
+        # resource; tauri-build's build.rs validates it exists even for a plain
+        # `cargo build`/clippy (not just `tauri build`). The real exe is a
+        # gitignored 40MB PyInstaller artifact — this job only needs the Rust
+        # code to compile cleanly, so a placeholder satisfies the check without
+        # pulling in Python/PyInstaller here. The real sidecar is actually built
+        # and bundled end-to-end by release.yml's tauri-installer job.
+        run: |
+          New-Item -ItemType Directory -Force -Path desktop/src-tauri/binaries | Out-Null
+          Set-Content -Path desktop/src-tauri/binaries/poketrack-server.exe -Value "placeholder"
+
       - name: cargo fmt --check
         working-directory: desktop/src-tauri
         run: cargo fmt --check
