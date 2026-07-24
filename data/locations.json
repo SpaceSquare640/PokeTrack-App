@@ -1,0 +1,37 @@
+{
+  "_comment": "User-saved Pokémon GO locations for PokéTrack. Not yet wired into any feature — plain data for now. Each entry: id (stable slug), name, lat/lng (WGS84 decimal degrees), region (matches data/regions_map.json's region list), notes.",
+  "locations": [
+    {
+      "id": "kowloon-park",
+      "name": "九龍公園 (Kowloon Park)",
+      "lat": 22.300395,
+      "lng": 114.170075,
+      "region": "Asia",
+      "notes": ""
+    },
+    {
+      "id": "bryant-park",
+      "name": "布萊恩特公園 (Bryant Park)",
+      "lat": 40.753808,
+      "lng": -73.983543,
+      "region": "North America",
+      "notes": ""
+    },
+    {
+      "id": "ikebukuro-toshima",
+      "name": "日本東京豐島區池袋",
+      "lat": 35.730105,
+      "lng": 139.719079,
+      "region": "Asia",
+      "notes": ""
+    },
+    {
+      "id": "tst-east-mtr-p1",
+      "name": "港鐵尖東站 P1 出口",
+      "lat": 22.297004,
+      "lng": 114.176061,
+      "region": "Asia",
+      "notes": ""
+    }
+  ]
+}

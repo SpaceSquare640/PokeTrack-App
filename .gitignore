@@ -6,9 +6,11 @@ venv/
 env/
 
 # PokéTrack runtime data (SQLite DB + image cache are machine-specific).
-# Ignore everything under data/ EXCEPT the version-controlled region map.
+# Ignore everything under data/ EXCEPT the version-controlled region map and
+# saved locations.
 data/*
 !data/regions_map.json
+!data/locations.json
 *.db
 *.db-wal
 *.db-shm
