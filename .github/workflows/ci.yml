@@ -8,12 +8,14 @@ on:
 
 jobs:
   # Pure-Python matrix — proves the app (and its graceful fallback) works with
-  # NO Rust toolchain installed. The native parity test self-skips here.
+  # NO Rust toolchain installed, on both platforms the app actually ships for.
+  # The native parity test self-skips here.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest]
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
@@ -34,9 +36,15 @@ jobs:
         run: python -m pytest -q
 
   # Native job — builds the Rust extension, installs it, and runs the suite so
-  # the native fast path + the native/Python parity test are exercised in CI.
+  # the native fast path + the native/Python parity test are exercised in CI, on
+  # both platforms (Windows is the platform the shipped wheel actually targets).
+  # Also enforces the cargo fmt/clippy hygiene documented in the wiki.
   native:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +56,16 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        working-directory: poketrack-native
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        working-directory: poketrack-native
+        run: cargo clippy --release --all-targets -- -D warnings
 
       - name: Build + install the native extension
         run: |
@@ -81,3 +99,28 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  # Desktop shell job — compiles the Tauri (Rust) desktop app on every push/PR,
+  # so a break in desktop/src-tauri surfaces here instead of at release time.
+  # Windows-only (the app only ships for Windows: NSIS installer, WebView2).
+  desktop-shell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        working-directory: desktop/src-tauri
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        working-directory: desktop/src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo build (compile check)
+        working-directory: desktop/src-tauri
+        run: cargo build

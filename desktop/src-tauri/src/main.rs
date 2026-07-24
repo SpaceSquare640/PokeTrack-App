@@ -26,7 +26,9 @@ struct ServerProcess(Mutex<Option<Child>>);
 
 /// Repo root, relative to this crate (desktop/src-tauri) — dev fallback only.
 fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("..")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
 }
 
 fn port_open() -> bool {
@@ -36,15 +38,12 @@ fn port_open() -> bool {
 /// Locate the bundled server sidecar in the app's resource dir, if present.
 fn bundled_server(app: &tauri::App) -> Option<PathBuf> {
     let res = app.path().resource_dir().ok()?;
-    for cand in [
+    [
         res.join("binaries").join("poketrack-server.exe"),
         res.join("poketrack-server.exe"),
-    ] {
-        if cand.exists() {
-            return Some(cand);
-        }
-    }
-    None
+    ]
+    .into_iter()
+    .find(|cand| cand.exists())
 }
 
 /// Start the server: the bundled sidecar when installed, else `python run_web.py`
@@ -145,7 +144,8 @@ fn main() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::Exit = event {
-                if let Some(mut child) = app_handle.state::<ServerProcess>().0.lock().unwrap().take()
+                if let Some(mut child) =
+                    app_handle.state::<ServerProcess>().0.lock().unwrap().take()
                 {
                     let _ = child.kill();
                 }
